@@ -121,7 +121,8 @@ Tests/          配重、容量、周报、保持率、建档、备份
 ## 校验（没有编译器时也能跑）
 
 ```bash
-./scripts/verify.sh               # 一键跑完下面四项 + 中英文案对齐
+./scripts/preflight.sh            # 推送前预检（8 项静态检查）
+./scripts/verify.sh               # 只跑规则与资产校验
 python3 spec/test_engine.py        # 配重规则 10 个边界用例（与 Swift 共用期望值）
 python3 spec/validate_assets.py    # 动作库、模板、计划包的引用完整性
 python3 spec/validate_project.py   # 工程结构、target 隔离、plist/JSON、括号配平
@@ -165,6 +166,13 @@ chrome --headless=new --force-device-scale-factor=3 --window-size=393,852 \
 这和训练侧是同一套哲学：**算得清比记得全重要**。真正让人失败的不是「不知道米饭多少千卡」，而是「不知道今天该吃多少」。
 
 ## 发布与 CI
+
+### 推送前预检
+
+`ash
+./scripts/preflight.sh
+`'n
+不依赖 Xcode，跑配重/营养/体脂公式、动作库、工程结构、import、符号引用、中英文案八项。全绿再推，能省一轮 CI。
 
 ### 没有 Mac 时拿到 ipa
 
