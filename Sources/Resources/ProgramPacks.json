@@ -1,0 +1,83 @@
+[
+  {
+    "id": "strength-5x5",
+    "name": "5×5 力量入门",
+    "coach": "练账编辑部",
+    "productID": "com.trainledger.pack.strength5x5",
+    "priceHint": "¥18",
+    "weeks": 8,
+    "summary": "三大项打底，每周三次，每次只做 3–4 个动作。适合想把力量拉起来、又不想在健身房待两小时的人。",
+    "days": [
+      {
+        "id": "s5-a",
+        "name": "A 日",
+        "focus": "蹲 · 推 · 拉",
+        "exerciseIDs": ["back-squat", "barbell-bench-press", "barbell-row", "hanging-leg-raise"]
+      },
+      {
+        "id": "s5-b",
+        "name": "B 日",
+        "focus": "硬拉 · 推举",
+        "exerciseIDs": ["deadlift", "overhead-press", "pull-up", "cable-crunch"]
+      },
+      {
+        "id": "s5-c",
+        "name": "C 日",
+        "focus": "前蹲 · 上斜",
+        "exerciseIDs": ["front-squat", "incline-dumbbell-press", "lat-pulldown", "lateral-raise"]
+      }
+    ]
+  },
+  {
+    "id": "cut-keep-strength",
+    "name": "4 周减脂保肌",
+    "coach": "练账编辑部",
+    "productID": "com.trainledger.pack.cutkeep",
+    "priceHint": "¥25",
+    "weeks": 4,
+    "summary": "强度不掉、容量减两成，每次训练后接 15–20 分钟低强度有氧。配合「力量保持率」看，就知道减的是脂肪还是肌肉。",
+    "days": [
+      {
+        "id": "cut-upper",
+        "name": "上肢",
+        "focus": "推 · 拉 · 核心",
+        "exerciseIDs": ["barbell-bench-press", "seated-row", "dumbbell-shoulder-press", "face-pull", "cable-crunch"]
+      },
+      {
+        "id": "cut-lower",
+        "name": "下肢",
+        "focus": "股二 · 股四 · 小腿",
+        "exerciseIDs": ["romanian-deadlift", "leg-press", "leg-curl", "standing-calf-raise", "hanging-leg-raise"]
+      },
+      {
+        "id": "cut-full",
+        "name": "全身",
+        "focus": "复合动作维持强度",
+        "exerciseIDs": ["back-squat", "lat-pulldown", "dumbbell-bench-press", "lateral-raise", "ab-wheel"]
+      }
+    ]
+  },
+  {
+    "id": "home-20min",
+    "name": "居家 20 分钟",
+    "coach": "练账编辑部",
+    "productID": "com.trainledger.pack.home20",
+    "priceHint": "¥12",
+    "weeks": 6,
+    "summary": "一对哑铃、20 分钟、两块瑜伽垫的空间。加班和出差也能练，重点是不中断。",
+    "days": [
+      {
+        "id": "h20-a",
+        "name": "A 日",
+        "focus": "腿 · 推 · 核心",
+        "exerciseIDs": ["goblet-squat", "push-up", "dumbbell-row", "russian-twist"]
+      },
+      {
+        "id": "h20-b",
+        "name": "B 日",
+        "focus": "单腿 · 肩 · 手臂",
+        "exerciseIDs": ["walking-lunge", "dumbbell-shoulder-press", "hammer-curl", "ab-wheel"]
+      }
+    ]
+  }
+]

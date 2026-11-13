@@ -1,0 +1,25 @@
+# Xcode
+*.xcodeproj/xcuserdata/
+*.xcworkspace/xcuserdata/
+DerivedData/
+build/
+*.xcuserstate
+
+# macOS
+.DS_Store
+
+# XcodeGen 生成物（用 xcodegen generate 重建）
+TrainLedger.xcodeproj/
+
+# 本地配置
+*.xcconfig.local
+
+# 生成物与产物
+project.generated.yml
+*.ipa
+*.xcarchive
+Payload/
+
+# Python
+__pycache__/
+*.pyc

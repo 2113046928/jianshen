@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<title>练账 UI 预览 v3</title>
+<style>
+  :root{
+    --paper:#F4F2EC; --card:#FFFFFF;
+    --ink:#16161A; --ink-2:#3C3C42; --ink-3:#7A7A82; --ink-4:#A8A8B0;
+    --hair:#E4E1D8; --hair-soft:#EEECE4;
+    --accent:#D9500E; --good:#2F8F6B; --warn:#C48319; --bad:#C8452F;
+    --shadow:0 1px 2px rgba(22,22,26,.05), 0 10px 30px -12px rgba(22,22,26,.18);
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  html,body{width:393px;height:852px;overflow:hidden;background:#8A8A8E;}
+  body{font-family:-apple-system,"SF Pro Text","Segoe UI","Microsoft YaHei",sans-serif;
+       -webkit-font-smoothing:antialiased;color:var(--ink);}
+  .phone{
+    width:393px;height:852px;position:relative;overflow:hidden;display:none;flex-direction:column;
+    background:
+      radial-gradient(90% 42% at 50% -6%, #FFFDF6 0%, rgba(255,253,246,0) 62%),
+      linear-gradient(180deg,#F6F4EE 0%,#F2EFE7 100%);
+  }
+  .phone:target{display:flex;}
+
+  .statusbar{height:52px;display:flex;align-items:flex-end;justify-content:space-between;
+             padding:0 30px 4px;font-size:13px;font-weight:600;flex:none;}
+  .island{position:absolute;top:10px;left:50%;transform:translateX(-50%);
+          width:112px;height:30px;border-radius:16px;background:#000;}
+
+  .nav{display:flex;align-items:flex-end;justify-content:space-between;padding:4px 24px 14px;flex:none;}
+  .nav h1{font-size:33px;font-weight:750;letter-spacing:-.9px;line-height:1.1;}
+
+  .scroll{flex:1;min-height:0;overflow:hidden;padding:0 20px;display:flex;flex-direction:column;gap:16px;}
+
+  /* ---------- 卡片 ---------- */
+  .card{
+    background:var(--card);border-radius:22px;padding:20px;
+    box-shadow:0 1px 2px rgba(22,22,26,.05), 0 10px 30px -12px rgba(22,22,26,.16);
+    display:flex;flex-direction:column;gap:14px;
+    position:relative;
+  }
+  .card::after{
+    content:"";position:absolute;inset:0;border-radius:22px;pointer-events:none;
+    box-shadow:inset 0 1px 0 rgba(255,255,255,.9);
+  }
+  .card.dark{
+    background:linear-gradient(158deg,#232329 0%,#141418 100%);
+    color:#fff;
+    box-shadow:0 2px 6px rgba(22,22,26,.18), 0 18px 44px -18px rgba(22,22,26,.55);
+    overflow:hidden;
+  }
+  .card.dark::after{
+    box-shadow:inset 0 1px 0 rgba(255,255,255,.10);
+  }
+  .card.dark .glow{
+    position:absolute;width:220px;height:220px;right:-70px;top:-90px;border-radius:50%;
+    background:radial-gradient(circle,rgba(217,80,14,.55) 0%, rgba(217,80,14,0) 68%);
+    pointer-events:none;
+  }
+  .hair{height:1px;background:var(--hair-soft);}
+
+  .micro{font-size:11px;font-weight:600;letter-spacing:.6px;color:var(--ink-4);text-transform:uppercase;}
+  .dark .micro{color:rgba(255,255,255,.45);}
+  .label{font-size:12px;font-weight:600;color:var(--ink-3);}
+  .dark .label{color:rgba(255,255,255,.55);}
+  .body{font-size:15px;color:var(--ink-2);line-height:1.45;}
+  .num{font-variant-numeric:tabular-nums;letter-spacing:-1px;}
+  .hero{font-size:52px;font-weight:750;letter-spacing:-2px;line-height:.95;}
+  .big{font-size:34px;font-weight:750;letter-spacing:-1.1px;line-height:1.14;}
+  .unit{font-size:13px;font-weight:600;color:var(--ink-3);letter-spacing:0;}
+  .dark .unit{color:rgba(255,255,255,.5);}
+
+  .row{display:flex;align-items:center;gap:10px;}
+  .between{justify-content:space-between;}
+  .col{display:flex;flex-direction:column;gap:3px;}
+  .spacer{flex:1;}
+
+  /* ---------- 一周柱条 ---------- */
+  .week{display:flex;align-items:flex-end;gap:9px;height:62px;}
+  .day{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;gap:7px;height:100%;}
+  .day .bar{width:100%;max-width:24px;min-height:5px;border-radius:6px;background:rgba(255,255,255,.16);}
+  .day.done .bar{background:rgba(255,255,255,.42);}
+  .day.on .bar{background:linear-gradient(180deg,#F2762E,#D9500E);box-shadow:0 4px 14px -4px rgba(217,80,14,.8);}
+  .day .d{font-size:10px;font-weight:700;letter-spacing:.3px;color:rgba(255,255,255,.35);}
+  .day.on .d,.day.done .d{color:rgba(255,255,255,.85);}
+
+  /* ---------- 动作行 ---------- */
+  .exercise{padding:11px 0;display:flex;align-items:baseline;gap:10px;}
+  .exercise .name{font-size:15.5px;font-weight:550;}
+  .exercise .reps{font-size:11.5px;font-weight:600;color:var(--ink-4);letter-spacing:.4px;}
+  .exercise .load{margin-left:auto;font-size:15px;font-weight:700;font-variant-numeric:tabular-nums;letter-spacing:-.3px;}
+  .exercise .load.idle{color:var(--ink-4);font-weight:600;font-size:13px;}
+
+  .primary{
+    height:52px;border-radius:16px;background:#16161A;color:#fff;
+    display:flex;align-items:center;justify-content:center;gap:8px;
+    font-size:16px;font-weight:650;letter-spacing:-.2px;
+    box-shadow:0 6px 18px -8px rgba(22,22,26,.55);
+  }
+
+  .stats{display:flex;}
+  .stat{flex:1;display:flex;flex-direction:column;gap:5px;min-width:0;}
+  .stat + .stat{border-left:1px solid var(--hair-soft);padding-left:14px;}
+  .stat .v{font-size:21px;font-weight:700;font-variant-numeric:tabular-nums;letter-spacing:-.7px;}
+  .stat .v small{font-size:11px;font-weight:600;color:var(--ink-4);margin-left:2px;}
+
+  .track{height:6px;border-radius:99px;background:var(--hair-soft);overflow:hidden;}
+  .track > i{display:block;height:100%;border-radius:99px;}
+  .barline{display:flex;flex-direction:column;gap:7px;}
+  .barline .top{display:flex;align-items:baseline;gap:6px;font-size:14px;font-weight:550;}
+  .barline .top .v{margin-left:auto;font-size:13px;font-weight:700;font-variant-numeric:tabular-nums;}
+  .barline .top .st{font-size:11px;font-weight:700;letter-spacing:.3px;}
+
+  .seg{display:flex;background:rgba(22,22,26,.05);border-radius:12px;padding:3px;gap:2px;}
+  .seg div{flex:1;text-align:center;font-size:13px;font-weight:600;padding:7px 0;border-radius:9px;color:var(--ink-3);}
+  .seg div.on{background:var(--card);color:var(--ink);box-shadow:0 1px 3px rgba(22,22,26,.10);}
+
+  .tabbar{height:82px;flex:none;display:flex;padding:9px 0 0;
+          background:rgba(244,242,236,.86);backdrop-filter:blur(22px) saturate(180%);
+          border-top:1px solid rgba(22,22,26,.06);}
+  .tab{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;
+       font-size:10px;font-weight:600;color:var(--ink-4);position:relative;}
+  .tab.on{color:var(--accent);}
+  .tab.on::after{content:"";position:absolute;top:-9px;width:18px;height:2.5px;border-radius:2px;background:var(--accent);}
+  .tab .g{height:22px;display:flex;align-items:center;}
+</style>
+</head>
+<body>
+
+<!-- ======================= 今天 ======================= -->
+<div class="phone" id="today">
+  <div class="island"></div>
+  <div class="statusbar"><span>9:41</span>
+    <span style="display:flex;align-items:center;gap:5px">
+      <svg width="17" height="11" viewBox="0 0 17 11" fill="currentColor"><rect x="0" y="7" width="3" height="4" rx="1"/><rect x="4.7" y="5" width="3" height="6" rx="1"/><rect x="9.4" y="2.5" width="3" height="8.5" rx="1"/><rect x="14.1" y="0" width="3" height="11" rx="1"/></svg>
+      <svg width="16" height="11" viewBox="0 0 16 11" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M1.5 4.2a9 9 0 0 1 13 0"/><path d="M4.2 7a5.5 5.5 0 0 1 7.6 0"/><circle cx="8" cy="9.6" r=".9" fill="currentColor" stroke="none"/></svg>
+      <svg width="25" height="12" viewBox="0 0 25 12" fill="none"><rect x=".6" y=".6" width="21" height="10.8" rx="3" stroke="currentColor" opacity=".35"/><rect x="2.2" y="2.2" width="17.8" height="7.6" rx="1.8" fill="currentColor"/><path d="M23 4v4a2.2 2.2 0 0 0 0-4z" fill="currentColor" opacity=".35"/></svg>
+    </span>
+  </div>
+
+  <div class="nav">
+    <h1>今天</h1>
+    <div style="padding-bottom:4px">
+      <svg width="46" height="46" viewBox="0 0 46 46">
+        <defs><linearGradient id="g1" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0" stop-color="#F5A05C"/><stop offset="1" stop-color="#D9500E"/>
+        </linearGradient></defs>
+        <circle cx="23" cy="23" r="20" fill="none" stroke="#E4E1D8" stroke-width="3"/>
+        <circle cx="23" cy="23" r="20" fill="none" stroke="url(#g1)" stroke-width="3"
+                stroke-linecap="round" stroke-dasharray="125.7" stroke-dashoffset="62.8"
+                transform="rotate(-90 23 23)"/>
+        <text x="23" y="27" text-anchor="middle" font-size="11" font-weight="700" fill="#3C3C42">2/4</text>
+      </svg>
+    </div>
+  </div>
+
+  <div class="scroll">
+    <!-- 深色数据卡：本周 -->
+    <div class="card dark" style="gap:16px">
+      <div class="glow"></div>
+      <div class="row between">
+        <div class="micro">本周</div>
+        <div class="label">减脂期 · 目标 4 练</div>
+      </div>
+
+      <div class="row" style="align-items:flex-end;gap:14px">
+        <div class="hero num" style="color:#fff">2<span style="font-size:22px;opacity:.45">/4</span></div>
+        <div class="col" style="gap:2px;padding-bottom:6px">
+          <div class="label" style="color:rgba(255,255,255,.75)">已完成 12.4 吨</div>
+          <div class="label" style="color:rgba(255,255,255,.45)">还差 2 次</div>
+        </div>
+      </div>
+
+      <div class="week">
+        <div class="day done"><div class="bar" style="height:100%"></div><div class="d">一</div></div>
+        <div class="day done"><div class="bar" style="height:78%"></div><div class="d">二</div></div>
+        <div class="day"><div class="bar" style="height:5px"></div><div class="d">三</div></div>
+        <div class="day on"><div class="bar" style="height:56%"></div><div class="d">四</div></div>
+        <div class="day"><div class="bar" style="height:5px"></div><div class="d">五</div></div>
+        <div class="day"><div class="bar" style="height:5px"></div><div class="d">六</div></div>
+        <div class="day"><div class="bar" style="height:5px"></div><div class="d">日</div></div>
+      </div>
+    </div>
+
+    <!-- 计划卡 -->
+    <div class="card">
+      <div class="row between" style="align-items:flex-start">
+        <div class="col" style="gap:4px">
+          <div class="big">推日</div>
+          <div class="label" style="color:var(--ink-4)">胸 · 肩 · 三头 · 6 个动作</div>
+        </div>
+        <div style="font-size:11px;font-weight:700;letter-spacing:.4px;padding:5px 9px;border-radius:8px;background:rgba(22,22,26,.055);color:var(--ink-2)">第 5 练</div>
+      </div>
+
+      <div>
+        <div class="exercise"><span class="name">杠铃卧推</span><span class="reps">6–10 次</span><span class="load num">82.5</span></div>
+        <div class="hair"></div>
+        <div class="exercise"><span class="name">上斜哑铃卧推</span><span class="reps">8–12 次</span><span class="load num">30</span></div>
+        <div class="hair"></div>
+        <div class="exercise"><span class="name">站姿杠铃推举</span><span class="reps">6–10 次</span><span class="load num">45</span></div>
+        <div class="hair"></div>
+        <div class="exercise"><span class="name">侧平举</span><span class="reps">12–15 次</span><span class="load num">12</span></div>
+        <div class="hair"></div>
+        <div class="exercise"><span class="name">绳索下压</span><span class="reps">10–15 次</span><span class="load idle">待校准</span></div>
+        <div class="hair"></div>
+        <div class="exercise"><span class="name">绳索夹胸</span><span class="reps">12–15 次</span><span class="load num">20</span></div>
+      </div>
+
+      <div class="primary">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5l11 7-11 7z"/></svg>
+        开始训练
+      </div>
+    </div>
+  </div>
+
+  <div class="tabbar">
+    <div class="tab on"><span class="g"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"><path d="M4 9v6M7 7v10M17 7v10M20 9v6M7 12h10"/></svg></span>今天</div>
+    <div class="tab"><span class="g"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"><path d="M4 7h16M4 12h16M4 17h11"/></svg></span>记录</div>
+    <div class="tab"><span class="g"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"><path d="M6 3v8M6 15v6M12 3v5M12 12v9M18 3v6M18 13v8"/></svg></span>饮食</div>
+    <div class="tab"><span class="g"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"><path d="M5 19v-6M12 19V5M19 19v-9"/></svg></span>周报</div>
+    <div class="tab"><span class="g"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"><circle cx="12" cy="8.5" r="3.2"/><path d="M5 19.5c0-3.4 3.1-5.4 7-5.4s7 2 7 5.4"/></svg></span>我的</div>
+  </div>
+</div>
+
+<!-- ======================= 周报 ======================= -->
+<div class="phone" id="report">
+  <div class="island"></div>
+  <div class="statusbar"><span>9:41</span>
+    <span style="display:flex;align-items:center;gap:5px">
+      <svg width="17" height="11" viewBox="0 0 17 11" fill="currentColor"><rect x="0" y="7" width="3" height="4" rx="1"/><rect x="4.7" y="5" width="3" height="6" rx="1"/><rect x="9.4" y="2.5" width="3" height="8.5" rx="1"/><rect x="14.1" y="0" width="3" height="11" rx="1"/></svg>
+      <svg width="16" height="11" viewBox="0 0 16 11" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M1.5 4.2a9 9 0 0 1 13 0"/><path d="M4.2 7a5.5 5.5 0 0 1 7.6 0"/><circle cx="8" cy="9.6" r=".9" fill="currentColor" stroke="none"/></svg>
+      <svg width="25" height="12" viewBox="0 0 25 12" fill="none"><rect x=".6" y=".6" width="21" height="10.8" rx="3" stroke="currentColor" opacity=".35"/><rect x="2.2" y="2.2" width="17.8" height="7.6" rx="1.8" fill="currentColor"/><path d="M23 4v4a2.2 2.2 0 0 0 0-4z" fill="currentColor" opacity=".35"/></svg>
+    </span>
+  </div>
+
+  <div class="nav"><h1>周报</h1></div>
+
+  <div class="scroll">
+    <div class="seg"><div class="on">近 7 天</div><div>前 7 天</div><div>前 14 天</div></div>
+
+    <!-- 深色完成率卡 -->
+    <div class="card dark" style="gap:12px">
+      <div class="glow"></div>
+      <div class="row between"><div class="micro">完成率</div><div class="label">减脂期</div></div>
+      <div class="row" style="align-items:flex-end;gap:12px">
+        <div class="hero num" style="color:#fff">75<span style="font-size:22px;opacity:.45">%</span></div>
+        <div class="col" style="gap:2px;padding-bottom:8px">
+          <div class="label" style="color:rgba(255,255,255,.7)">3 / 4 次</div>
+          <div class="label" style="color:rgba(255,255,255,.4)">差一次就满</div>
+        </div>
+      </div>
+      <div class="track" style="background:rgba(255,255,255,.12)"><i style="width:75%;background:linear-gradient(90deg,#F2762E,#D9500E)"></i></div>
+    </div>
+
+    <div class="card">
+      <div class="stats">
+        <div class="stat"><div class="micro">总容量</div><div class="v">12.4<small>吨</small></div></div>
+        <div class="stat"><div class="micro">完成组数</div><div class="v">54</div></div>
+        <div class="stat"><div class="micro">PR</div><div class="v" style="color:var(--accent)">2</div></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="row between"><div class="micro">肌群容量</div><div class="label" style="color:var(--ink-4)">目标区间</div></div>
+      <div style="display:flex;flex-direction:column;gap:13px">
+        <div class="barline"><div class="top"><span>胸</span><span class="v">8 组</span><span class="st" style="color:var(--warn)">不足</span></div><div class="track"><i style="width:40%;background:var(--warn)"></i></div></div>
+        <div class="barline"><div class="top"><span>背</span><span class="v">14 组</span><span class="st" style="color:var(--good)">达标</span></div><div class="track"><i style="width:64%;background:var(--good)"></i></div></div>
+        <div class="barline"><div class="top"><span>腿</span><span class="v">16 组</span><span class="st" style="color:var(--good)">达标</span></div><div class="track"><i style="width:73%;background:var(--good)"></i></div></div>
+        <div class="barline"><div class="top"><span>肩</span><span class="v">6 组</span><span class="st" style="color:var(--warn)">不足</span></div><div class="track"><i style="width:38%;background:var(--warn)"></i></div></div>
+        <div class="barline"><div class="top"><span>手臂</span><span class="v">9 组</span><span class="st" style="color:var(--good)">达标</span></div><div class="track"><i style="width:64%;background:var(--good)"></i></div></div>
+        <div class="barline"><div class="top"><span>核心</span><span class="v">2 组</span><span class="st" style="color:var(--warn)">不足</span></div><div class="track"><i style="width:17%;background:var(--warn)"></i></div></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="tabbar">
+    <div class="tab"><span class="g"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"><path d="M4 9v6M7 7v10M17 7v10M20 9v6M7 12h10"/></svg></span>今天</div>
+    <div class="tab"><span class="g"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"><path d="M4 7h16M4 12h16M4 17h11"/></svg></span>记录</div>
+    <div class="tab"><span class="g"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"><path d="M6 3v8M6 15v6M12 3v5M12 12v9M18 3v6M18 13v8"/></svg></span>饮食</div>
+    <div class="tab on"><span class="g"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"><path d="M5 19v-6M12 19V5M19 19v-9"/></svg></span>周报</div>
+    <div class="tab"><span class="g"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"><circle cx="12" cy="8.5" r="3.2"/><path d="M5 19.5c0-3.4 3.1-5.4 7-5.4s7 2 7 5.4"/></svg></span>我的</div>
+  </div>
+</div>
+
+<script>
+  var id = location.hash.replace('#','') || 'today';
+  document.querySelectorAll('.phone').forEach(function(el){
+    el.style.display = (el.id === id) ? 'flex' : 'none';
+  });
+</script>
+</body>
+</html>

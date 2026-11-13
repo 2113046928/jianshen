@@ -1,0 +1,23 @@
+{
+  "version": 1,
+  "items": [
+    { "name": "鸡胸肉", "protein": 31, "kcal": 165 },
+    { "name": "鸡蛋", "protein": 13, "kcal": 143 },
+    { "name": "瘦牛肉", "protein": 26, "kcal": 250 },
+    { "name": "三文鱼", "protein": 20, "kcal": 208 },
+    { "name": "虾", "protein": 24, "kcal": 99 },
+    { "name": "金枪鱼罐头", "protein": 26, "kcal": 116 },
+    { "name": "牛奶", "protein": 3.3, "kcal": 61 },
+    { "name": "希腊酸奶", "protein": 10, "kcal": 59 },
+    { "name": "北豆腐", "protein": 8, "kcal": 76 },
+    { "name": "乳清蛋白粉", "protein": 80, "kcal": 400 },
+    { "name": "燕麦", "protein": 13, "kcal": 389 },
+    { "name": "米饭", "protein": 2.6, "kcal": 116 },
+    { "name": "红薯", "protein": 1.6, "kcal": 86 },
+    { "name": "香蕉", "protein": 1.1, "kcal": 89 },
+    { "name": "花生", "protein": 26, "kcal": 567 },
+    { "name": "杏仁", "protein": 21, "kcal": 579 },
+    { "name": "西兰花", "protein": 2.8, "kcal": 34 },
+    { "name": "玉米", "protein": 4, "kcal": 96 }
+  ]
+}
