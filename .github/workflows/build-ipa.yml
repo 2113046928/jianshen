@@ -1,7 +1,7 @@
 name: Build IPA
 
 # 用 GitHub 的 macOS runner 产出未签名 ipa（无需证书）。
-# 需要签名的 TestFlight 包见 scripts/archive.sh 与 README 的「签名」一节。
+# 需要签名的 TestFlight 包见 scripts/archive.sh 与 README 的「发布与 CI」一节。
 
 on:
   workflow_dispatch:
@@ -25,8 +25,10 @@ jobs:
         run: python3 scripts/gen_project.py
 
       - name: 归档（禁用签名）
+        id: archive
+        continue-on-error: true
         run: |
-          set -euo pipefail
+          set -o pipefail
           xcodebuild archive \
             -project TrainLedger.xcodeproj \
             -scheme TrainLedger \
@@ -36,9 +38,31 @@ jobs:
             CODE_SIGNING_ALLOWED=NO \
             CODE_SIGNING_REQUIRED=NO \
             CODE_SIGN_IDENTITY="" \
-            ONLY_ACTIVE_ARCH=NO
+            ONLY_ACTIVE_ARCH=NO 2>&1 | tee archive.log
+
+      # 归档错误写进 job summary，公开仓库无需凭据即可查看
+      - name: 汇总归档错误
+        if: always()
+        run: |
+          {
+            echo "## 归档结果"
+            echo ""
+            if [ -f archive.log ]; then
+              echo '```'
+              grep -E "error:|BUILD FAILED|The following build commands failed|requires a provisioning|cannot find" archive.log | head -60 || true
+              echo '```'
+              echo ""
+              echo "### 错误上下文"
+              echo '```'
+              grep -B3 -A8 "error:" archive.log | head -150 || true
+              echo '```'
+            else
+              echo "没有 archive.log"
+            fi
+          } >> "$GITHUB_STEP_SUMMARY"
 
       - name: 打包 ipa
+        if: steps.archive.outcome == 'success'
         run: |
           set -euo pipefail
           APP=$(find build/TrainLedger.xcarchive/Products/Applications -maxdepth 1 -name "*.app" | head -1)
@@ -50,8 +74,13 @@ jobs:
           ls -lh TrainLedger-unsigned.ipa
 
       - name: 上传产物
+        if: steps.archive.outcome == 'success'
         uses: actions/upload-artifact@v4
         with:
           name: TrainLedger-unsigned-ipa
           path: build/TrainLedger-unsigned.ipa
           retention-days: 14
+
+      - name: 标记失败
+        if: steps.archive.outcome == 'failure'
+        run: exit 1
