@@ -62,6 +62,8 @@ enum WeeklyReportBuilder {
         for session in ordered {
             let baseline = bestEstimate
             var sessionBest: [String: Double] = [:]
+            // 同一动作在同一次训练里只记一次 PR，避免「3 组都破纪录」被算成 3 个
+            var prFlagged: Set<String> = []
 
             for set in session.sets where set.setType != .warmup {
                 totalSets += 1
@@ -80,8 +82,10 @@ enum WeeklyReportBuilder {
                 let estimate = StrengthEstimate.oneRepMax(weight: set.weight, reps: set.reps)
                 if let previous = baseline[set.exerciseID],
                    set.setType == .normal,
-                   estimate > previous {
+                   estimate > previous,
+                   !prFlagged.contains(set.exerciseID) {
                     prCount += 1
+                    prFlagged.insert(set.exerciseID)
                 }
                 sessionBest[set.exerciseID] = max(sessionBest[set.exerciseID] ?? 0, estimate)
             }

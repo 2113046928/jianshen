@@ -197,7 +197,7 @@ final class UserProfile {
     /// 是否完成首次建档（nil 视为未完成，便于旧数据迁移）
     var didOnboard: Bool?
     /// 已解锁的计划包 ID
-    var unlockedProgramIDs: [String]
+    var unlockedProgramIDs: [String] = []
     /// 营养计算需要的字段（nil 表示还没填，界面用默认值兜底）
     var sexRaw: String?
     var age: Int?

@@ -45,6 +45,10 @@ final class FormCheckService: ObservableObject {
             var elapsed = 0.0
 
             while elapsed < seconds {
+                if Task.isCancelled {
+                    state = .idle
+                    return
+                }
                 let time = CMTime(seconds: elapsed, preferredTimescale: 600)
                 if let frame = try? await generator.image(at: time),
                    let sample = poseSample(from: frame.image) {
@@ -52,6 +56,9 @@ final class FormCheckService: ObservableObject {
                 }
                 elapsed += frameInterval
                 state = .analyzing(min(elapsed / seconds, 1))
+                // Vision 是同步调用，整段都在主线程；每帧让出一次，至少让进度条能刷新。
+                // 彻底解决要把抽帧 + 推理挪到后台 actor，见 README 已知限制。
+                await Task.yield()
             }
 
             state = .finished(SquatAnalyzer.analyze(samples: samples, frameInterval: frameInterval))

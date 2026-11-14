@@ -7,7 +7,7 @@ struct ReportView: View {
 
     @State private var windowIndex = 0
 
-    private let windowTitles = ["近 7 天", "前 7 天", "前 14 天"]
+    private let windowTitles = ["近 7 天", "前 7 天", "更早 7 天"]
 
     private var profile: UserProfile? { profiles.first }
     private var weeklyGoal: Int { max(profile?.weeklyGoal ?? 3, 1) }

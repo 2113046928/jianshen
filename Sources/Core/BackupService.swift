@@ -260,7 +260,10 @@ enum BackupService {
             profile.weeklyGoal = file.profile.weeklyGoal
             profile.activeProgramID = file.profile.programID
             profile.phaseStartedAt = file.profile.phaseStartedAt
-            profile.unlockedProgramIDs = file.profile.unlockedProgramIDs
+            // 计划包属于购买权益，以本机当前状态为准；备份只能补充，不能反向撤销
+            let merged = Set(profile.unlockedProgramIDs)
+                .union(file.profile.unlockedProgramIDs)
+            profile.unlockedProgramIDs = Array(merged).sorted()
         }
 
         try context.save()
