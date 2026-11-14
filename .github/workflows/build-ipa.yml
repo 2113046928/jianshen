@@ -25,8 +25,8 @@ jobs:
       - name: 安装 XcodeGen
         run: brew install xcodegen
 
-      - name: 生成工程
-        run: python3 scripts/gen_project.py
+      - name: 生成工程（先不含 watch target）
+        run: WITH_WATCH=0 python3 scripts/gen_project.py
 
       - name: 编译（禁用签名，iphoneos）
         id: build
