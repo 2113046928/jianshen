@@ -71,10 +71,10 @@ final class VolumeAndReportTests: XCTestCase {
     // MARK: - 周报
 
     private func reportSet(
-        _ exerciseID: String = "bench",
         _ weight: Double,
         _ reps: Int,
-        _ type: SetType = .normal
+        _ type: SetType = .normal,
+        exerciseID: String = "bench"
     ) -> ReportSet {
         ReportSet(
             exerciseID: exerciseID,
