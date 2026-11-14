@@ -28,7 +28,7 @@ jobs:
             -destination 'platform=iOS Simulator,name=iPhone 16,OS=latest' \
             CODE_SIGNING_ALLOWED=NO 2>&1 | tee build.log
 
-      # 把错误写进 job summary：公开仓库无需凭据即可查看，方便排障
+      # 错误同时写 summary（给人看）和 annotation（给 API 读）
       - name: 汇总错误
         if: always()
         run: |
@@ -39,15 +39,23 @@ jobs:
               echo '```'
               grep -E "error:|BUILD FAILED|Testing failed|The following build commands failed" build.log | head -60 || true
               echo '```'
-              echo ""
-              echo "### 错误上下文"
-              echo '```'
-              grep -B3 -A8 "error:" build.log | head -150 || true
-              echo '```'
             else
               echo "没有 build.log"
             fi
           } >> "$GITHUB_STEP_SUMMARY"
+
+          if [ -f build.log ]; then
+            COUNT=0
+            while IFS= read -r line; do
+              [ -z "$line" ] && continue
+              echo "::error::${line:0:400}"
+              COUNT=$((COUNT + 1))
+              [ "$COUNT" -ge 8 ] && break
+            done <<< "$(grep -E 'error:' build.log | head -8)"
+            if [ "$COUNT" -eq 0 ]; then
+              echo "::error::xcodebuild 失败但没有匹配到 error: 行，请查看 job summary"
+            fi
+          fi
 
       - name: 标记失败
         if: steps.test.outcome == 'failure'
