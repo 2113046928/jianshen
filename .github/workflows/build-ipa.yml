@@ -2,6 +2,10 @@ name: Build IPA
 
 # 用 GitHub 的 macOS runner 产出未签名 ipa（无需证书）。
 # 需要签名的 TestFlight 包见 scripts/archive.sh 与 README 的「发布与 CI」一节。
+#
+# 这里刻意不用 `xcodebuild archive`：禁用签名时 archive 会把 actool 指到
+# iphonesimulator SDK，报 "No simulator runtime version ... available"。
+# 直接 build -sdk iphoneos 再手工组 Payload 更稳。
 
 on:
   workflow_dispatch:
@@ -24,76 +28,73 @@ jobs:
       - name: 生成工程
         run: python3 scripts/gen_project.py
 
-      - name: 归档（禁用签名）
-        id: archive
+      - name: 编译（禁用签名，iphoneos）
+        id: build
         continue-on-error: true
         run: |
           set -o pipefail
-          xcodebuild archive \
+          xcodebuild build \
             -project TrainLedger.xcodeproj \
             -scheme TrainLedger \
             -configuration Release \
+            -sdk iphoneos \
             -destination 'generic/platform=iOS' \
-            -archivePath build/TrainLedger.xcarchive \
+            -derivedDataPath build \
             CODE_SIGNING_ALLOWED=NO \
             CODE_SIGNING_REQUIRED=NO \
             CODE_SIGN_IDENTITY="" \
-            ONLY_ACTIVE_ARCH=NO 2>&1 | tee archive.log
+            ONLY_ACTIVE_ARCH=NO 2>&1 | tee build.log
 
-      # 归档错误写进 job summary，公开仓库无需凭据即可查看
-      - name: 汇总归档错误
+      # 错误同时写 summary（给人看）和 annotation（给 API 读）
+      - name: 汇总错误
         if: always()
         run: |
           {
-            echo "## 归档结果"
+            echo "## 编译结果"
             echo ""
-            if [ -f archive.log ]; then
+            if [ -f build.log ]; then
               echo '```'
-              grep -E "error:|BUILD FAILED|The following build commands failed|requires a provisioning|cannot find" archive.log | head -60 || true
-              echo '```'
-              echo ""
-              echo "### 错误上下文"
-              echo '```'
-              grep -B3 -A8 "error:" archive.log | head -150 || true
+              grep -E "error:|BUILD FAILED|The following build commands failed" build.log | head -60 || true
               echo '```'
             else
-              echo "没有 archive.log"
+              echo "没有 build.log"
             fi
           } >> "$GITHUB_STEP_SUMMARY"
 
-          if [ -f archive.log ]; then
+          if [ -f build.log ]; then
             COUNT=0
             while IFS= read -r line; do
               [ -z "$line" ] && continue
               echo "::error::${line:0:400}"
               COUNT=$((COUNT + 1))
               [ "$COUNT" -ge 8 ] && break
-            done <<< "$(grep -E 'error:' archive.log | head -8)"
+            done <<< "$(grep -E 'error:' build.log | head -8)"
             if [ "$COUNT" -eq 0 ]; then
-              echo "::error::归档失败但没有匹配到 error: 行，请查看 job summary"
+              echo "::error::编译失败但没有匹配到 error: 行，请查看 job summary"
             fi
           fi
 
       - name: 打包 ipa
-        if: steps.archive.outcome == 'success'
+        if: steps.build.outcome == 'success'
         run: |
           set -euo pipefail
-          APP=$(find build/TrainLedger.xcarchive/Products/Applications -maxdepth 1 -name "*.app" | head -1)
+          APP=$(find build/Build/Products/Release-iphoneos -maxdepth 1 -name "*.app" | head -1)
           echo "app: $APP"
-          mkdir -p build/Payload
-          cp -R "$APP" build/Payload/
-          cd build
+          test -n "$APP"
+          mkdir -p dist/Payload
+          cp -R "$APP" dist/Payload/
+          cd dist
           zip -qry TrainLedger-unsigned.ipa Payload
           ls -lh TrainLedger-unsigned.ipa
 
       - name: 上传产物
-        if: steps.archive.outcome == 'success'
+        if: steps.build.outcome == 'success'
         uses: actions/upload-artifact@v4
         with:
           name: TrainLedger-unsigned-ipa
-          path: build/TrainLedger-unsigned.ipa
+          path: dist/TrainLedger-unsigned.ipa
           retention-days: 14
 
       - name: 标记失败
-        if: steps.archive.outcome == 'failure'
+        if: steps.build.outcome == 'failure'
         run: exit 1
