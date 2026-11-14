@@ -18,9 +18,37 @@ jobs:
         run: xcodegen generate
 
       - name: 单元测试（不签名）
+        id: test
+        continue-on-error: true
         run: |
+          set -o pipefail
           xcodebuild test \
             -project TrainLedger.xcodeproj \
             -scheme TrainLedger \
             -destination 'platform=iOS Simulator,name=iPhone 16,OS=latest' \
-            CODE_SIGNING_ALLOWED=NO
+            CODE_SIGNING_ALLOWED=NO 2>&1 | tee build.log
+
+      # 把错误写进 job summary：公开仓库无需凭据即可查看，方便排障
+      - name: 汇总错误
+        if: always()
+        run: |
+          {
+            echo "## 构建结果"
+            echo ""
+            if [ -f build.log ]; then
+              echo '```'
+              grep -E "error:|BUILD FAILED|Testing failed|The following build commands failed" build.log | head -60 || true
+              echo '```'
+              echo ""
+              echo "### 错误上下文"
+              echo '```'
+              grep -B3 -A8 "error:" build.log | head -150 || true
+              echo '```'
+            else
+              echo "没有 build.log"
+            fi
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: 标记失败
+        if: steps.test.outcome == 'failure'
+        run: exit 1
