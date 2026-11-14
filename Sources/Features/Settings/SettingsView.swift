@@ -199,7 +199,7 @@ struct SettingsView: View {
         guard let profile else { return }
         let calendar = Calendar.current
         let todayMetric = (try? context.fetch(FetchDescriptor<BodyMetric>()))?
-            .first { calendar.isDateInToday(.date) }
+            .first { calendar.isDateInToday($0.date) }
         if let todayMetric {
             todayMetric.bodyweight = profile.bodyweight
         } else {
