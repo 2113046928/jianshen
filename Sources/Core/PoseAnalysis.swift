@@ -22,15 +22,15 @@ enum PoseMath {
         guard n1 > 0.0001, n2 > 0.0001 else { return 0 }
         let dot = v1.dx * v2.dx + v1.dy * v2.dy
         let cosine = max(-1, min(1, dot / (n1 * n2)))
-        return acos(cosine) * 180 / .pi
+        return acos(cosine) * 180.0 / Double.pi
     }
 
     /// 线段与竖直方向的夹角（度），用于判断躯干前倾
     static func tiltFromVertical(from base: CGPoint, to top: CGPoint) -> Double {
-        let dx = top.x - base.x
-        let dy = top.y - base.y
+        let dx = Double(top.x - base.x)
+        let dy = Double(top.y - base.y)
         guard abs(dx) > 0.0001 || abs(dy) > 0.0001 else { return 0 }
-        return abs(atan2(dx, dy)) * 180 / .pi
+        return abs(atan2(dx, dy)) * 180.0 / Double.pi
     }
 }
 
