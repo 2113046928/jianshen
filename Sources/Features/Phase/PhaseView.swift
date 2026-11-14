@@ -43,6 +43,14 @@ struct PhaseView: View {
         return "\(Int((value * 100).rounded()))%"
     }
 
+    /// 保持率越高越绿：≥97% 正常，≥90% 注意，其余告警
+    private var overallColor: Color {
+        guard let value = RetentionAnalyzer.overall(retentions) else { return Theme.onDarkFaint }
+        if value >= 0.97 { return Theme.good }
+        if value >= 0.90 { return Theme.warn }
+        return Theme.danger
+    }
+
     private var weeks: Int {
         max(1, Int(Date.now.timeIntervalSince(phaseStart) / 604_800))
     }

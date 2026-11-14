@@ -56,7 +56,7 @@ struct PackStoreView: View {
                 }
             }
 
-            Text(L10n.packMeta(weeks: pack.weeks, days: pack.days.count, coach: pack.coach))
+            Text(L10n.packMeta(weeks: pack.weeks, days: pack.template.days.count, coach: pack.coach))
                 .font(.caption2)
                 .foregroundStyle(Theme.inkFaint)
 
@@ -109,7 +109,7 @@ struct PackStoreView: View {
     }
 
     private func dayPreview(_ pack: ProgramPack) -> String {
-        pack.days.map { "\($0.name)：\($0.exerciseIDs.count) 个动作" }.joined(separator: "  ")
+        pack.template.days.map { "\($0.name)：\($0.exerciseIDs.count) 个动作" }.joined(separator: "  ")
     }
 
     private var footer: some View {
