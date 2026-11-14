@@ -46,6 +46,7 @@ final class PurchaseService: ObservableObject {
                 switch verification {
                 case .verified(let transaction):
                     isPurchased = true
+                    ProEntitlement.shared.unlock()
                     message = "已解锁 Pro。"
                     await transaction.finish()
                 case .unverified:
@@ -64,12 +65,19 @@ final class PurchaseService: ObservableObject {
     }
 
     func refreshEntitlement() async {
+        var entitled = false
         for await result in Transaction.currentEntitlements {
             if case .verified(let transaction) = result,
                transaction.productID == Self.productID,
                transaction.revocationDate == nil {
-                isPurchased = true
+                entitled = true
             }
+        }
+        isPurchased = entitled
+        if entitled {
+            ProEntitlement.shared.unlock()
+        } else {
+            ProEntitlement.shared.revoke()
         }
     }
 

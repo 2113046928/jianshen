@@ -98,7 +98,7 @@ enum WorkoutFactory {
             for index in 0..<setCount {
                 let working = WorkoutSet(
                     order: index + 1,
-                    weight: isDeload ? (lastSets.last?.weight ?? prefillWeight) : prefillWeight,
+                    weight: isDeload ? (lastSets.map(\.weight).max() ?? prefillWeight) : prefillWeight,
                     reps: prefillReps,
                     rpe: nil,
                     setType: .normal,

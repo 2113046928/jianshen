@@ -125,7 +125,6 @@
 "第 %lld 组，点按标记完成" = "Set %lld, tap to mark complete";
 
 "饮食" = "Nutrition";
-"千卡 / 天" = "kcal / day";
 "三大营养素" = "Macros";
 "分到四餐" = "Split across four meals";
 "本周调整" = "This week's adjustment";
@@ -168,9 +167,7 @@
 "每周 3 练，新手与回归期首选" = "3 sessions a week — best for beginners and comebacks";
 "每周 3–6 练，最通用的增肌结构" = "3–6 sessions a week — the most general hypertrophy split";
 "每周 4 练，时间紧时最省事" = "4 sessions a week — the most time-efficient";
-"每次平均组数" = "Avg sets";
 "肌群容量" = "Muscle volume";
-"训练次数" = "Sessions";
 "记录次数" = "Check-ins";
 "识别次数" = "Reps detected";
 "近 7 天肌群容量" = "Volume, last 7 days";
@@ -201,3 +198,15 @@
 
 "%" = "%";
 "FFMI" = "FFMI";
+
+"Pro" = "Pro";
+"了解 Pro" = "See Pro";
+"用阶段开始前后的最佳 1RM 做对比，卧推、深蹲、硬拉、推举分项显示。这是 Pro 的一部分。" = "Compares your best 1RM before and during the phase, broken down by bench, squat, deadlift and press. Part of Pro.";
+"看减脂期掉的是脂肪还是肌肉" = "See whether cutting cost you fat or muscle";
+
+"千卡" = "kcal";
+"本周" = "This week";
+"本周训练量柱状图" = "Weekly training volume chart";
+"每日目标" = "Daily target";
+
+"时长" = "Duration";

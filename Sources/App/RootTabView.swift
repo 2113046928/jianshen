@@ -47,6 +47,8 @@ struct RootTabView: View {
             guard !ready else { return }
             ready = true
 
+            await ProEntitlement.shared.refreshFromStore()
+
             if DemoSeed.isRequested {
                 DemoSeed.seed(context: context)
             } else {

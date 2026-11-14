@@ -86,11 +86,12 @@ struct WorkoutView: View {
     // MARK: - 概览
 
     private var summaryBar: some View {
-        HStack(spacing: 8) {
-            StatTile(title: "完成组数", value: "\(session.completedSetCount)")
-            StatTile(title: "总容量", value: Fmt.volume(session.totalVolume))
-            StatTile(title: "动作数", value: "\(session.exercises.count)")
-        }
+        StatRow(items: [
+            .init(title: "完成组数", value: "\(session.completedSetCount)"),
+            .init(title: "总容量", value: Fmt.volume(session.totalVolume)),
+            .init(title: "动作数", value: "\(session.exercises.count)")
+        ])
+        .card()
     }
 
     // MARK: - 休息计时
@@ -244,6 +245,16 @@ private struct ExerciseCard: View {
                 } else {
                     Pill(text: "待校准", color: Theme.warn)
                 }
+                Button {
+                    showAlternatives = true
+                } label: {
+                    Image(systemName: "arrow.triangle.2.circlepath")
+                        .font(.system(size: 15, weight: .semibold))
+                        .foregroundStyle(Theme.accent)
+                        .frame(width: 30, height: 26)
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel("换动作")
             }
 
             VStack(spacing: 8) {

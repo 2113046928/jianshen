@@ -34,13 +34,17 @@ struct NutritionView: View {
     }
 
     /// 最近 7 天相对前 7 天的体重变化比例
+    /// 最近 7 天 vs 再前 7 天。之前是「最近 7 天 vs 全部历史」，
+    /// 记录越久分母越稳，周变化会被稀释成 0。
     private var weeklyChangePercent: Double? {
-        guard metrics.count >= 2 else { return nil }
         let calendar = Calendar.current
         let now = Date.now
-        guard let weekAgo = calendar.date(byAdding: .day, value: -7, to: now) else { return nil }
+        guard let weekAgo = calendar.date(byAdding: .day, value: -7, to: now),
+              let twoWeeksAgo = calendar.date(byAdding: .day, value: -14, to: now) else {
+            return nil
+        }
         let recent = metrics.filter { $0.date >= weekAgo }
-        let earlier = metrics.filter { $0.date < weekAgo }
+        let earlier = metrics.filter { $0.date < weekAgo && $0.date >= twoWeeksAgo }
         guard let recentAvg = average(recent.map(\.bodyweight)),
               let earlierAvg = average(earlier.map(\.bodyweight)),
               earlierAvg > 0 else { return nil }

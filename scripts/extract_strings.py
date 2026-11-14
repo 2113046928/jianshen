@@ -31,6 +31,7 @@ PATTERNS = [
     r'SectionHeader\(\s*title:\s*"((?:[^"\\]|\\.)*)"',
     r'subtitle:\s*"((?:[^"\\]|\\.)*)"',
     r'StatTile\(\s*title:\s*"((?:[^"\\]|\\.)*)"',
+    r'\.init\(\s*title:\s*"((?:[^"\\]|\\.)*)"',
     r'PrimaryButton\(\s*title:\s*"((?:[^"\\]|\\.)*)"',
     r'EmptyHint\(\s*text:\s*"((?:[^"\\]|\\.)*)"',
 ]
