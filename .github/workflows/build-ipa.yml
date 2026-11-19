@@ -65,6 +65,11 @@ jobs:
             else
               echo "没有 build.log"
             fi
+            echo ""
+            echo "### 日志尾部"
+            echo '```'
+            tail -30 build.log 2>/dev/null || true
+            echo '```'
           } >> "$GITHUB_STEP_SUMMARY"
 
           if [ -f build.log ]; then
@@ -76,7 +81,10 @@ jobs:
               [ "$COUNT" -ge 8 ] && break
             done <<< "$(grep -E 'error:' build.log | head -8)"
             if [ "$COUNT" -eq 0 ]; then
-              echo "::error::编译失败但没有匹配到 error: 行，请查看 job summary"
+              while IFS= read -r line; do
+                [ -z "$line" ] && continue
+                echo "::error::${line:0:400}"
+              done <<< "$(tail -6 build.log)"
             fi
           fi
 

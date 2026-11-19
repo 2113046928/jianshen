@@ -56,6 +56,11 @@ jobs:
             else
               echo "没有 build.log"
             fi
+            echo ""
+            echo "### 日志尾部"
+            echo '```'
+            tail -30 build.log 2>/dev/null || true
+            echo '```'
           } >> "$GITHUB_STEP_SUMMARY"
 
           if [ -f build.log ]; then
