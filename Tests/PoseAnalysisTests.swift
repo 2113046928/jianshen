@@ -58,8 +58,8 @@ final class PoseAnalysisTests: XCTestCase {
         XCTAssertEqual(result.reps, 2)
         XCTAssertEqual(result.minKneeAngle, 80, accuracy: 0.001)
         XCTAssertEqual(result.frameCount, 13)
-        // 每段 80° 出现在第 3 帧、回到 170° 在第 6 帧，约 0.6 秒
-        XCTAssertEqual(result.averageTempo, 0.6, accuracy: 0.001)
+        // 第 3 帧进底部（t=0.4s）、第 7 帧回到 170°（t=1.2s），每段 0.8 秒
+        XCTAssertEqual(result.averageTempo, 0.8, accuracy: 0.001)
     }
 
     func testNoRepWhenNeverDeepEnough() {

@@ -47,7 +47,8 @@ final class ExerciseSubstitutionTests: XCTestCase {
         let base = catalog[0]
         let result = ExerciseSubstitution.alternatives(for: base, in: catalog)
         XCTAssertEqual(result.first?.id, "db-bench")
-        XCTAssertGreaterThan(
+        // 同分是允许的：哑铃卧推与俯卧撑都算「同模式 + 复合」，排序靠 sortIndex 兜底
+        XCTAssertGreaterThanOrEqual(
             ExerciseSubstitution.score(catalog[1], against: base),
             ExerciseSubstitution.score(catalog[3], against: base)
         )
