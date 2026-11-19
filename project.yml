@@ -37,18 +37,23 @@ targets:
       copy:
         destination: wrapper
         subpath: Watch
+    info:
+      path: Targets/App/Info.plist
+      properties:
+        CFBundleDisplayName: 练账
+        CFBundleShortVersionString: $(MARKETING_VERSION)
+        CFBundleVersion: $(CURRENT_PROJECT_VERSION)
+        UILaunchScreen: {}
+        UISupportedInterfaceOrientations:
+        - UIInterfaceOrientationPortrait
+        NSSupportsLiveActivities: true
+        NSHealthShareUsageDescription: 读取体重与活动能量，用于计算减脂期的力量保持率与容量趋势；数据只保存在本机。
+        NSHealthUpdateUsageDescription: 在获得授权后把训练记录写入「健康」，方便在系统里统一查看。
+        ITSAppUsesNonExemptEncryption: false
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.trainledger.app
         PRODUCT_NAME: TrainLedger
-        GENERATE_INFOPLIST_FILE: true
-        INFOPLIST_KEY_CFBundleDisplayName: 练账
-        INFOPLIST_KEY_UILaunchScreen_Generation: true
-        INFOPLIST_KEY_UISupportedInterfaceOrientations: UIInterfaceOrientationPortrait
-        INFOPLIST_KEY_NSSupportsLiveActivities: true
-        INFOPLIST_KEY_NSHealthShareUsageDescription: 读取体重与活动能量，用于计算减脂期的力量保持率与容量趋势；数据只保存在本机。
-        INFOPLIST_KEY_NSHealthUpdateUsageDescription: 在获得授权后把训练记录写入「健康」，方便在系统里统一查看。
-        INFOPLIST_KEY_NSHumanReadableCopyright: ''
         TARGETED_DEVICE_FAMILY: '1'
         ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
         ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME: AccentColor

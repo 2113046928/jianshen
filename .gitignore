@@ -23,3 +23,6 @@ Payload/
 # Python
 __pycache__/
 *.pyc
+
+# xcodegen 生成的 Info.plist
+Targets/App/Info.plist
