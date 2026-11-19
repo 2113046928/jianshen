@@ -94,9 +94,15 @@ def main() -> int:
         return generate(SRC)
 
     stripped = strip_for_ci(SRC.read_text(encoding="utf-8"))
-    leftover = [n for n in ("TrainLedgerWatch", "TrainLedgerWidgets") if n in stripped]
-    if leftover:
-        print(f"精简失败，仍包含：{leftover}", file=sys.stderr)
+    problems = []
+    if "TrainLedgerWatch" in stripped:
+        problems.append("仍包含 watch target")
+    if "target: TrainLedgerWidgets" in stripped:
+        problems.append("仍嵌入 widget")
+    if "entitlements:" in stripped:
+        problems.append("仍包含 entitlements")
+    if problems:
+        print(f"精简失败：{problems}", file=sys.stderr)
         return 2
     OUT.write_text(stripped, encoding="utf-8")
     print("targets: CI 精简模式（无 watch / 无 widget 嵌入 / 无 entitlements）")
