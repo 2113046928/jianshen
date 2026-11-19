@@ -16,6 +16,9 @@ on:
     tags:
       - "v*"
 
+permissions:
+  contents: write
+
 jobs:
   build:
     runs-on: macos-15
@@ -108,6 +111,20 @@ jobs:
           name: TrainLedger-unsigned-ipa
           path: dist/TrainLedger-unsigned.ipa
           retention-days: 14
+
+      - name: 把构建日志推到 ci-log 分支
+        if: always()
+        continue-on-error: true
+        run: |
+          if [ -f build.log ]; then
+            cp build.log ci-last-build.log
+            git config user.name "ci-bot"
+            git config user.email "ci@trainledger.local"
+            git checkout -B ci-log
+            git add -f ci-last-build.log
+            git commit -m "ci: 构建日志 $(date -u +%FT%TZ)" || true
+            git push -f origin ci-log
+          fi
 
       - name: 标记失败
         if: steps.build.outcome == 'failure'
