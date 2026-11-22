@@ -11,15 +11,17 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: 选择 Xcode
+      # 关键：用**最新**的 Xcode。runner 上可能同时装了多个版本，
+      # 老版本（如 Xcode_16.0）常常没有配套的 iOS 模拟器运行时，
+      # 会报 "iOS 18.0 is not installed" 然后找不到任何 destination。
+      - name: 选择最新 Xcode
         run: |
-          if [ -d /Applications/Xcode_16.app ]; then
-            sudo xcode-select -s /Applications/Xcode_16.app
-          else
-            NEWEST=$(ls -d /Applications/Xcode*.app 2>/dev/null | sort -V | tail -1)
-            [ -n "$NEWEST" ] && sudo xcode-select -s "$NEWEST"
+          NEWEST=$(ls -d /Applications/Xcode*.app 2>/dev/null | sort -V | tail -1)
+          if [ -n "$NEWEST" ]; then
+            sudo xcode-select -s "$NEWEST"
           fi
           xcode-select -p
+          xcodebuild -version
 
       - name: 安装 XcodeGen
         run: brew install xcodegen
@@ -27,15 +29,21 @@ jobs:
       - name: 生成工程
         run: xcodegen generate
 
+      - name: 确认模拟器运行时
+        run: |
+          xcrun simctl list runtimes || true
+          if ! xcrun simctl list devices available | grep -q "iPhone"; then
+            echo "没有可用 iPhone 模拟器，开始下载 iOS 平台（可能几分钟）"
+            sudo xcodebuild -downloadPlatform iOS || true
+          fi
+          xcrun simctl list devices available | head -30
+
       - name: 单元测试（不签名）
         id: test
         continue-on-error: true
         run: |
           set -o pipefail
-          xcodebuild -version || true
 
-          # runner 上模拟器型号不固定：先自动挑一台可用的 iPhone，
-          # 挑不到就退回按名字找，避免整步因为选设备失败而没有日志。
           DEVICE_ID=$(xcrun simctl list devices available -j | python3 -c "
           import json, sys
           data = json.load(sys.stdin)['devices']
@@ -49,17 +57,17 @@ jobs:
           sys.exit(1)
           " || true)
 
-          if [ -n "$DEVICE_ID" ]; then
-            DESTINATION="platform=iOS Simulator,id=$DEVICE_ID"
-          else
-            DESTINATION="platform=iOS Simulator,name=iPhone 16"
+          if [ -z "$DEVICE_ID" ]; then
+            echo "::error::没有可用的 iPhone 模拟器，运行时不完整"
+            xcrun simctl list runtimes || true
+            exit 1
           fi
-          echo "destination: $DESTINATION"
 
+          echo "simulator: $DEVICE_ID"
           xcodebuild test \
             -project TrainLedger.xcodeproj \
             -scheme TrainLedger \
-            -destination "$DESTINATION" \
+            -destination "platform=iOS Simulator,id=$DEVICE_ID" \
             CODE_SIGNING_ALLOWED=NO 2>&1 | tee build.log
 
       # 错误同时写 summary（给人看）和 annotation（给 API 读）

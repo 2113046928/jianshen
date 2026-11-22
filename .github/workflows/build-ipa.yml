@@ -25,15 +25,14 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: 选择 Xcode
+      - name: 选择最新 Xcode
         run: |
-          if [ -d /Applications/Xcode_16.app ]; then
-            sudo xcode-select -s /Applications/Xcode_16.app
-          else
-            NEWEST=$(ls -d /Applications/Xcode*.app 2>/dev/null | sort -V | tail -1)
-            [ -n "$NEWEST" ] && sudo xcode-select -s "$NEWEST"
+          NEWEST=$(ls -d /Applications/Xcode*.app 2>/dev/null | sort -V | tail -1)
+          if [ -n "$NEWEST" ]; then
+            sudo xcode-select -s "$NEWEST"
           fi
           xcode-select -p
+          xcodebuild -version
 
       - name: 安装 XcodeGen
         run: brew install xcodegen
