@@ -115,7 +115,14 @@ def generate(spec_path: Path) -> int:
             file=sys.stderr,
         )
         return 2
-    return subprocess.call(["xcodegen", "generate", "--spec", str(spec_path)])
+    code = subprocess.call(["xcodegen", "generate", "--spec", str(spec_path)])
+    if code != 0:
+        # xcodegen 的报错只说 key，不给行号；把 spec 打出来，CI 日志里才能对照。
+        print(f"--- xcodegen 失败，以下是 {spec_path.name} 全文 ---", file=sys.stderr)
+        for index, line in enumerate(spec_path.read_text(encoding="utf-8").splitlines(), 1):
+            print(f"{index:4} | {line}", file=sys.stderr)
+        print("--- 结束 ---", file=sys.stderr)
+    return code
 
 
 def main() -> int:
