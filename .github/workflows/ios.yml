@@ -11,6 +11,16 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: 选择 Xcode
+        run: |
+          if [ -d /Applications/Xcode_16.app ]; then
+            sudo xcode-select -s /Applications/Xcode_16.app
+          else
+            NEWEST=$(ls -d /Applications/Xcode*.app 2>/dev/null | sort -V | tail -1)
+            [ -n "$NEWEST" ] && sudo xcode-select -s "$NEWEST"
+          fi
+          xcode-select -p
+
       - name: 安装 XcodeGen
         run: brew install xcodegen
 
@@ -22,7 +32,10 @@ jobs:
         continue-on-error: true
         run: |
           set -o pipefail
-          # runner 上模拟器型号不固定，自动挑第一台可用的 iPhone
+          xcodebuild -version || true
+
+          # runner 上模拟器型号不固定：先自动挑一台可用的 iPhone，
+          # 挑不到就退回按名字找，避免整步因为选设备失败而没有日志。
           DEVICE_ID=$(xcrun simctl list devices available -j | python3 -c "
           import json, sys
           data = json.load(sys.stdin)['devices']
@@ -34,12 +47,19 @@ jobs:
                       print(d['udid'])
                       sys.exit(0)
           sys.exit(1)
-          ")
-          echo "simulator: $DEVICE_ID"
+          " || true)
+
+          if [ -n "$DEVICE_ID" ]; then
+            DESTINATION="platform=iOS Simulator,id=$DEVICE_ID"
+          else
+            DESTINATION="platform=iOS Simulator,name=iPhone 16"
+          fi
+          echo "destination: $DESTINATION"
+
           xcodebuild test \
             -project TrainLedger.xcodeproj \
             -scheme TrainLedger \
-            -destination "platform=iOS Simulator,id=$DEVICE_ID" \
+            -destination "$DESTINATION" \
             CODE_SIGNING_ALLOWED=NO 2>&1 | tee build.log
 
       # 错误同时写 summary（给人看）和 annotation（给 API 读）
@@ -53,14 +73,14 @@ jobs:
               echo '```'
               grep -E "error:|BUILD FAILED|Testing failed|The following build commands failed|failed \(" build.log | head -60 || true
               echo '```'
+              echo ""
+              echo "### 日志尾部"
+              echo '```'
+              tail -30 build.log 2>/dev/null || true
+              echo '```'
             else
               echo "没有 build.log"
             fi
-            echo ""
-            echo "### 日志尾部"
-            echo '```'
-            tail -30 build.log 2>/dev/null || true
-            echo '```'
           } >> "$GITHUB_STEP_SUMMARY"
 
           if [ -f build.log ]; then
@@ -72,7 +92,10 @@ jobs:
               [ "$COUNT" -ge 8 ] && break
             done <<< "$(grep -E 'error:|Testing failed|failed \(' build.log | head -8)"
             if [ "$COUNT" -eq 0 ]; then
-              echo "::error::xcodebuild 失败但没有匹配到 error: 行，请查看 job summary"
+              while IFS= read -r line; do
+                [ -z "$line" ] && continue
+                echo "::error::${line:0:400}"
+              done <<< "$(tail -6 build.log)"
             fi
           fi
 

@@ -106,9 +106,15 @@ jobs:
         if: steps.build.outcome == 'success'
         run: |
           set -euo pipefail
-          APP=$(find build/Build/Products/Release-iphoneos -maxdepth 1 -name "*.app" | head -1)
+          # 不假设产物目录名，直接在 derived data 里找 .app；
+          # 找不到就把目录结构打出来，避免又一次"静默 exit 1"。
+          APP=$(find build -maxdepth 6 -type d -name "*.app" | head -1)
+          if [ -z "$APP" ]; then
+            echo "::error::找不到 .app，以下是 build/ 下的目录结构"
+            find build -maxdepth 4 -type d | head -40
+            exit 1
+          fi
           echo "app: $APP"
-          test -n "$APP"
           mkdir -p dist/Payload
           cp -R "$APP" dist/Payload/
           cd dist

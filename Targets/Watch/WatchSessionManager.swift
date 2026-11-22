@@ -2,8 +2,14 @@ import Combine
 import Foundation
 import WatchConnectivity
 
-@MainActor
-final class WatchSessionManager: NSObject, ObservableObject {
+/// 手表端的连接管理。
+///
+/// 刻意**不用** `@MainActor`：`WCSessionDelegate` 是 ObjC 协议，
+/// 在 main-actor 隔离的类上实现容易出现隔离面不匹配、进而报
+/// "does not conform to protocol 'WCSessionDelegate'"。
+/// 这里让类保持非隔离，所有 UI 状态更新显式切回主线程，行为等价且更稳。
+final class WatchSessionManager: NSObject, ObservableObject, WCSessionDelegate {
+
     @Published var state: WatchWorkoutState = .idle
     @Published var hint: String?
     @Published var isReachable = false
@@ -18,20 +24,18 @@ final class WatchSessionManager: NSObject, ObservableObject {
     func completeSet() {
         guard WCSession.default.activationState == .activated,
               WCSession.default.isReachable else {
-            hint = "手机不在身边，无法记录"
+            apply { self.hint = "手机不在身边，无法记录" }
             return
         }
         WCSession.default.sendMessage(
             ["action": "completeSet"],
             replyHandler: { [weak self] reply in
-                Task { @MainActor in
-                    self?.hint = (reply["ok"] as? Bool == true) ? "已记录" : "记录失败"
-                }
+                let ok = reply["ok"] as? Bool == true
+                self?.apply { $0.hint = ok ? "已记录" : "记录失败" }
             },
             errorHandler: { [weak self] error in
-                Task { @MainActor in
-                    self?.hint = error.localizedDescription
-                }
+                let text = error.localizedDescription
+                self?.apply { $0.hint = text }
             }
         )
     }
@@ -49,28 +53,32 @@ final class WatchSessionManager: NSObject, ObservableObject {
     func resetToPhone() {
         hint = nil
     }
-}
 
-extension WatchSessionManager: WCSessionDelegate {
-    nonisolated func session(
+    /// 统一切回主线程改发布属性
+    private func apply(_ change: @escaping (WatchSessionManager) -> Void) {
+        DispatchQueue.main.async { [weak self] in
+            guard let self else { return }
+            change(self)
+        }
+    }
+
+    // MARK: - WCSessionDelegate
+
+    func session(
         _ session: WCSession,
         activationDidCompleteWith activationState: WCSessionActivationState,
         error: Error?
     ) {
         let reachable = session.isReachable
-        Task { @MainActor in
-            self.isReachable = reachable
-        }
+        apply { $0.isReachable = reachable }
     }
 
-    nonisolated func sessionReachabilityDidChange(_ session: WCSession) {
+    func sessionReachabilityDidChange(_ session: WCSession) {
         let reachable = session.isReachable
-        Task { @MainActor in
-            self.isReachable = reachable
-        }
+        apply { $0.isReachable = reachable }
     }
 
-    nonisolated func session(
+    func session(
         _ session: WCSession,
         didReceiveApplicationContext applicationContext: [String: Any]
     ) {
@@ -78,9 +86,9 @@ extension WatchSessionManager: WCSessionDelegate {
               let decoded = try? JSONDecoder().decode(WatchWorkoutState.self, from: data) else {
             return
         }
-        Task { @MainActor in
-            self.state = decoded
-            self.hint = nil
+        apply {
+            $0.state = decoded
+            $0.hint = nil
         }
     }
 }

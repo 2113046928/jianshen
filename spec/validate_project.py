@@ -87,12 +87,25 @@ for f in ROOT.rglob("*.swift"):
 print(f"Swift 文件: {swift_count}")
 
 # 6. 关键 Info 配置
+# 主 target 现在用显式 Info.plist（targets.TrainLedger.info.properties），
+# 只有资源目录名还留在构建设置里。
 app_settings = targets["TrainLedger"]["settings"]["base"]
-for key in ["INFOPLIST_KEY_NSSupportsLiveActivities",
-            "INFOPLIST_KEY_NSHealthShareUsageDescription",
-            "ASSETCATALOG_COMPILER_APPICON_NAME"]:
-    if key not in app_settings:
-        errors.append(f"App 缺少构建设置: {key}")
+if "ASSETCATALOG_COMPILER_APPICON_NAME" not in app_settings:
+    errors.append("App 缺少构建设置: ASSETCATALOG_COMPILER_APPICON_NAME")
+
+app_info = targets["TrainLedger"].get("info", {})
+info_props = app_info.get("properties", {})
+for key in ["NSSupportsLiveActivities",
+            "NSHealthShareUsageDescription",
+            "NSHealthUpdateUsageDescription",
+            "UILaunchScreen",
+            "CFBundleShortVersionString",
+            "CFBundleVersion"]:
+    if key not in info_props:
+        errors.append(f"App Info.plist 缺少键: {key}")
+
+if "GENERATE_INFOPLIST_FILE" in app_settings:
+    errors.append("不要再开 GENERATE_INFOPLIST_FILE（与显式 Info.plist 冲突）")
 
 if not (ROOT / "Sources/Resources/Assets.xcassets/AppIcon.appiconset/AppIcon.png").exists():
     errors.append("缺少 1024 图标文件")
