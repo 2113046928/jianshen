@@ -78,6 +78,23 @@ def _drop_entitlements(lines):
     return out
 
 
+def _drop_empty_keys(lines):
+    """删掉已经没有子项的 `dependencies:` 之类的空 key。
+
+    xcodegen 要求 dependencies 是数组；如果把它下面的项全删光却留下 `dependencies:`，
+    解析会报 "Incorrect type, expected Array<Any> found"。
+    """
+    out = []
+    for i, line in enumerate(lines):
+        if re.match(r"^\s+dependencies:\s*$", line):
+            indent = len(line) - len(line.lstrip())
+            nxt = next((l for l in lines[i + 1 :] if l.strip()), None)
+            if nxt is None or (len(nxt) - len(nxt.lstrip())) <= indent:
+                continue
+        out.append(line)
+    return out
+
+
 def strip_for_ci(text: str, watch: bool, widget: bool, entitlements: bool) -> str:
     lines = text.splitlines()
     if watch:
@@ -87,6 +104,7 @@ def strip_for_ci(text: str, watch: bool, widget: bool, entitlements: bool) -> st
         lines = _drop_dependency(lines, "TrainLedgerWidgets")
     if entitlements:
         lines = _drop_entitlements(lines)
+    lines = _drop_empty_keys(lines)
     return "\n".join(lines) + "\n"
 
 
