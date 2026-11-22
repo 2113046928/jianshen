@@ -40,16 +40,25 @@ def _drop_target_block(lines, name):
 
 
 def _drop_dependency(lines, name):
-    out, skipping = [], False
+    """删掉 `- target: X` 及其后续更深缩进的行。
+
+    结束条件按缩进算：只要下一行的缩进 <= `- target` 的缩进，就不再属于这一项。
+    之前用固定空格数判断，会把紧跟其后的 `info:` / `settings:` 块一起吞掉。
+    """
+    out, skipping, base_indent = [], False, 0
     for line in lines:
-        if re.match(rf"^\s+- target: {name}\s*$", line):
+        m = re.match(rf"^(\s*)- target: {name}\s*$", line)
+        if m:
+            base_indent = len(m.group(1))
             skipping = True
             continue
         if skipping:
-            if re.match(r"^\s{4}- ", line) or re.match(r"^\s{0,2}\S", line):
-                skipping = False
-            else:
+            if not line.strip():
                 continue
+            indent = len(line) - len(line.lstrip())
+            if indent > base_indent:
+                continue
+            skipping = False
         out.append(line)
     return out
 
