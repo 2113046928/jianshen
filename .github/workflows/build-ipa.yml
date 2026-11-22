@@ -37,12 +37,14 @@ jobs:
       - name: 安装 XcodeGen
         run: brew install xcodegen
 
-      - name: 生成工程（完整：含 widget 与 watch，仅去掉 entitlements）
+      - name: 生成工程（含 widget，去掉 watch 与 entitlements）
         run: |
           set -o pipefail
-          # 只去 entitlements：未签名时它不生效，还会干扰打包；
-          # widget / watch 保留，侧载工具重签时会一并处理。
-          WITH_ENTITLEMENTS=0 python3 scripts/gen_project.py 2>&1 | tee gen.log
+          # 只去 watch 与 entitlements：
+          # - watch 会被 -sdk iphoneos 强行用 iOS SDK 编译，一致性报错，且产物不可用；
+          # - entitlements 未签名时不生效，还会干扰打包，由侧载工具重签时补上。
+          # widget 保留：这样你重签后小组件能出现。
+          WITH_WATCH=0 WITH_ENTITLEMENTS=0 python3 scripts/gen_project.py 2>&1 | tee gen.log
 
       - name: 环境信息
         continue-on-error: true
