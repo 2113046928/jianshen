@@ -83,13 +83,25 @@ def _drop_empty_keys(lines):
 
     xcodegen 要求 dependencies 是数组；如果把它下面的项全删光却留下 `dependencies:`，
     解析会报 "Incorrect type, expected Array<Any> found"。
+
+    注意 xcodegen 的 YAML 允许列表项与 key 同缩进：
+        dependencies:
+        - target: TrainLedger
+    所以「下一行缩进 == key 缩进」且以 `-` 开头时，它仍然是子项，不能当成空 key。
     """
     out = []
     for i, line in enumerate(lines):
         if re.match(r"^\s+dependencies:\s*$", line):
             indent = len(line) - len(line.lstrip())
             nxt = next((l for l in lines[i + 1 :] if l.strip()), None)
-            if nxt is None or (len(nxt) - len(nxt.lstrip())) <= indent:
+            is_child = nxt is not None and (
+                (len(nxt) - len(nxt.lstrip())) > indent
+                or (
+                    (len(nxt) - len(nxt.lstrip())) == indent
+                    and nxt.lstrip().startswith("- ")
+                )
+            )
+            if not is_child:
                 continue
         out.append(line)
     return out
