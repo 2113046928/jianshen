@@ -2,58 +2,30 @@ import Combine
 import Foundation
 import StoreKit
 
-/// Pro 权益状态：全 App 唯一来源，持久化在 UserDefaults，启动时按 StoreKit 校准。
+/// 功能开关：全 App 唯一来源。
 ///
-/// DEBUG 构建默认解锁，方便开发与截图；Release 才会真正拦。
+/// 当前版本**全部功能免费**，`isPro` 恒为 true，不做任何拦截。
+/// 保留这层抽象是为了以后要重新加付费时，只需要改这里和 `unlock/revoke` 的实现，
+/// 不用回头改各个页面。
 @MainActor
 final class ProEntitlement: ObservableObject {
     static let shared = ProEntitlement()
 
     static let productID = "com.trainledger.app.pro.lifetime"
-    private static let storageKey = "pro.entitlement.unlocked"
 
-    @Published private(set) var isPro: Bool
+    /// 恒为 true：本版本不限制任何功能。
+    @Published private(set) var isPro: Bool = true
 
-    private let defaults: UserDefaults
+    private init() {}
 
-    private init(defaults: UserDefaults = .standard) {
-        self.defaults = defaults
-        #if DEBUG
-        self.isPro = true
-        #else
-        self.isPro = defaults.bool(forKey: Self.storageKey)
-        #endif
-    }
-
-    /// 购买或恢复成功后调用
+    /// 保留接口：购买成功后调用（当前无效果）。
     func unlock() {
         isPro = true
-        defaults.set(true, forKey: Self.storageKey)
     }
 
-    /// 退款、撤销或换账号后调用。DEBUG 下忽略，避免开发机没有商品时被锁住。
-    func revoke() {
-        #if DEBUG
-        return
-        #else
-        isPro = false
-        defaults.set(false, forKey: Self.storageKey)
-        #endif
-    }
+    /// 保留接口：退款/撤销时调用。本版本不做锁定，所以是空实现。
+    func revoke() {}
 
-    /// 启动时按当前有效交易校准一次；DEBUG 不覆盖本地开关
-    func refreshFromStore() async {
-        #if DEBUG
-        return
-        #else
-        var entitled = false
-        for await result in Transaction.currentEntitlements {
-            guard case .verified(let transaction) = result,
-                  transaction.productID == Self.productID,
-                  transaction.revocationDate == nil else { continue }
-            entitled = true
-        }
-        entitled ? unlock() : revoke()
-        #endif
-    }
+    /// 保留接口：启动时按 StoreKit 校准。本版本不需要，直接返回。
+    func refreshFromStore() async {}
 }

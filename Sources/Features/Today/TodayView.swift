@@ -10,7 +10,6 @@ struct TodayView: View {
     @State private var activeWorkout: TrainingSession?
     @State private var showPhaseFromLaunch = false
 
-    @ObservedObject private var pro = ProEntitlement.shared
 
     private var profile: UserProfile? { profiles.first }
     private var phase: Phase { profile?.phase ?? .bulk }
@@ -238,19 +237,9 @@ struct TodayView: View {
 
             Spacer(minLength: 8)
 
-            if pro.isPro {
-                Text(loadText)
-                    .tabular(size: hasWeight ? 15 : 12, weight: .bold)
-                    .foregroundStyle(hasWeight ? Theme.ink : Theme.inkGhost)
-            } else {
-                HStack(spacing: 3) {
-                    Image(systemName: "lock.fill")
-                        .font(.system(size: 8, weight: .bold))
-                    Text("Pro")
-                        .font(.system(size: 11, weight: .bold))
-                }
-                .foregroundStyle(Theme.accent)
-            }
+            Text(loadText)
+                .tabular(size: hasWeight ? 15 : 12, weight: .bold)
+                .foregroundStyle(hasWeight ? Theme.ink : Theme.inkGhost)
         }
         .padding(.vertical, 11)
     }

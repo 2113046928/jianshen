@@ -39,8 +39,17 @@ final class HealthService: ObservableObject {
             isAuthorized = true
             lastError = nil
         } catch {
-            lastError = error.localizedDescription
+            lastError = friendly(error)
         }
+    }
+
+    /// 未签名/精简构建里没有 HealthKit 权限，系统给的原话很难懂，这里翻成人话。
+    private func friendly(_ error: Error) -> String {
+        let text = error.localizedDescription
+        if text.lowercased().contains("entitlement") {
+            return "这个安装包没有 HealthKit 权限（重新签名打包后可用）。健康同步先跳过，其他功能不受影响。"
+        }
+        return text
     }
 
     /// 最近一条体重（kg）

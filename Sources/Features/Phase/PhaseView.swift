@@ -20,7 +20,6 @@ struct PhaseView: View {
 
     @ObservedObject private var health = HealthService.shared
     @State private var syncMessage: String?
-    @ObservedObject private var pro = ProEntitlement.shared
 
     private var profile: UserProfile? { profiles.first }
     private var phase: Phase { profile?.phase ?? .bulk }
@@ -58,14 +57,10 @@ struct PhaseView: View {
     var body: some View {
         ScrollView {
             VStack(spacing: 16) {
-                if pro.isPro {
-                    headerCard
-                    retentionCard
-                    weightCard
-                    adviceCard
-                } else {
-                    lockedCard
-                }
+                headerCard
+                retentionCard
+                weightCard
+                adviceCard
             }
             .padding(Theme.pad)
         }
@@ -75,41 +70,6 @@ struct PhaseView: View {
     }
 
     // MARK: - 头部
-
-    // MARK: - 未解锁
-
-    private var lockedCard: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            Text("力量保持率")
-                .microLabel()
-                .foregroundColor(Theme.inkFaint)
-
-            Text("看减脂期掉的是脂肪还是肌肉")
-                .font(.system(size: 19, weight: .bold))
-                .tracking(-0.4)
-                .foregroundStyle(Theme.ink)
-
-            Text("用阶段开始前后的最佳 1RM 做对比，卧推、深蹲、硬拉、推举分项显示。这是 Pro 的一部分。")
-                .font(.system(size: 12.5))
-                .foregroundStyle(Theme.inkSoft)
-                .fixedSize(horizontal: false, vertical: true)
-
-            NavigationLink {
-                PaywallView()
-            } label: {
-                HStack {
-                    Text("了解 Pro")
-                        .font(.system(size: 15, weight: .semibold))
-                    Spacer()
-                    Image(systemName: "chevron.right")
-                        .font(.system(size: 12, weight: .bold))
-                }
-                .foregroundStyle(Theme.accent)
-                .padding(.top, 2)
-            }
-        }
-        .card()
-    }
 
     private var headerCard: some View {
         VStack(alignment: .leading, spacing: 14) {

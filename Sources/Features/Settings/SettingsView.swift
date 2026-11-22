@@ -6,7 +6,6 @@ struct SettingsView: View {
     @Query private var profiles: [UserProfile]
     @Query(sort: \TrainingSession.startedAt, order: .reverse) private var sessions: [TrainingSession]
 
-    @StateObject private var purchases = PurchaseService()
 
     private var profile: UserProfile? { profiles.first }
 
@@ -15,7 +14,6 @@ struct SettingsView: View {
             trainingSection
             phaseSection
             programSection
-            purchaseSection
             toolSection
             programPackSection
             BackupSection()
@@ -24,7 +22,6 @@ struct SettingsView: View {
         .navigationTitle("我的")
         .navigationBarTitleDisplayMode(.inline)
         .task {
-            await purchases.load()
         }
     }
 
@@ -133,22 +130,6 @@ struct SettingsView: View {
                     Text(L10n.unlockedCount(profile?.unlockedProgramIDs.count ?? 0))
                         .font(.caption)
                         .foregroundStyle(.secondary)
-                }
-            }
-        }
-    }
-
-    private var purchaseSection: some View {
-        Section("升级") {
-            NavigationLink {
-                PaywallView()
-            } label: {
-                HStack {
-                    Label("练账 Pro", systemImage: "bolt.fill")
-                    Spacer()
-                    Text(purchases.isPurchased ? "已解锁" : "买断")
-                        .font(.caption)
-                        .foregroundStyle(purchases.isPurchased ? Theme.good : Theme.accent)
                 }
             }
         }

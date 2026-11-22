@@ -66,12 +66,24 @@ enum SeedLoader {
 
     /// 保证存在一条用户设置记录
     static func ensureProfile(context: ModelContext) -> UserProfile {
-        if let profiles = try? context.fetch(FetchDescriptor<UserProfile>()),
-           let existing = profiles.first {
-            return existing
+        let fetched = try? context.fetch(FetchDescriptor<UserProfile>())
+        let profile: UserProfile
+        if let first = fetched?.first {
+            profile = first
+        } else {
+            let created = UserProfile()
+            context.insert(created)
+            profile = created
         }
-        let profile = UserProfile()
-        context.insert(profile)
+
+        // 当前版本不卖计划包：把内置包全部解锁，避免「看得到却点不进去」。
+        // 以后要恢复付费，把这段删掉即可。
+        let allPackIDs = PackCatalog.bundled.map(\.id)
+        let missing = allPackIDs.filter { !profile.unlockedProgramIDs.contains($0) }
+        if !missing.isEmpty {
+            profile.unlockedProgramIDs.append(contentsOf: missing)
+        }
+
         try? context.save()
         return profile
     }
