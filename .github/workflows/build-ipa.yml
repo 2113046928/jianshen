@@ -37,11 +37,12 @@ jobs:
       - name: 安装 XcodeGen
         run: brew install xcodegen
 
-      - name: 生成工程（仅主 App，供未签名打包验证）
+      - name: 生成工程（完整：含 widget 与 watch，仅去掉 entitlements）
         run: |
           set -o pipefail
-          WITH_WATCH=0 WITH_WIDGET=0 WITH_ENTITLEMENTS=0 \
-            python3 scripts/gen_project.py 2>&1 | tee gen.log
+          # 只去 entitlements：未签名时它不生效，还会干扰打包；
+          # widget / watch 保留，侧载工具重签时会一并处理。
+          WITH_ENTITLEMENTS=0 python3 scripts/gen_project.py 2>&1 | tee gen.log
 
       - name: 环境信息
         continue-on-error: true
@@ -108,27 +109,32 @@ jobs:
         if: steps.build.outcome == 'success'
         run: |
           set -euo pipefail
-          # 不假设产物目录名，直接在 derived data 里找 .app；
-          # 找不到就把目录结构打出来，避免又一次"静默 exit 1"。
-          APP=$(find build -maxdepth 6 -type d -name "*.app" | head -1)
+          # 主 App 一定要取 Release-iphoneos 下那个；
+          # 直接 find *.app 可能先命中 watch 的 .app。
+          APP=$(find build -maxdepth 6 -type d -name "TrainLedger.app" | head -1)
+          if [ -z "$APP" ]; then
+            APP=$(find build -maxdepth 6 -type d -name "*.app" | head -1)
+          fi
           if [ -z "$APP" ]; then
             echo "::error::找不到 .app，以下是 build/ 下的目录结构"
             find build -maxdepth 4 -type d | head -40
             exit 1
           fi
           echo "app: $APP"
+          echo "--- 内部结构（确认扩展与 watch 都在）---"
+          find "$APP" -maxdepth 2 | head -20
           mkdir -p dist/Payload
           cp -R "$APP" dist/Payload/
           cd dist
-          zip -qry TrainLedger-unsigned.ipa Payload
-          ls -lh TrainLedger-unsigned.ipa
+          zip -qry TrainLedger-full.ipa Payload
+          ls -lh TrainLedger-full.ipa
 
       - name: 上传产物
         if: steps.build.outcome == 'success'
         uses: actions/upload-artifact@v4
         with:
-          name: TrainLedger-unsigned-ipa
-          path: dist/TrainLedger-unsigned.ipa
+          name: TrainLedger-full-ipa
+          path: dist/TrainLedger-full.ipa
           retention-days: 14
 
       - name: 把构建日志推到 ci-log 分支
