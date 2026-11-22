@@ -24,7 +24,7 @@ final class WatchSessionManager: NSObject, ObservableObject, WCSessionDelegate {
     func completeSet() {
         guard WCSession.default.activationState == .activated,
               WCSession.default.isReachable else {
-            apply { self.hint = "手机不在身边，无法记录" }
+            apply { $0.hint = "手机不在身边，无法记录" }
             return
         }
         WCSession.default.sendMessage(
