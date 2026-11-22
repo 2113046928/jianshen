@@ -38,7 +38,10 @@ jobs:
         run: brew install xcodegen
 
       - name: 生成工程（仅主 App，供未签名打包验证）
-        run: WITH_WATCH=0 WITH_WIDGET=0 WITH_ENTITLEMENTS=0 python3 scripts/gen_project.py
+        run: |
+          set -o pipefail
+          WITH_WATCH=0 WITH_WIDGET=0 WITH_ENTITLEMENTS=0 \
+            python3 scripts/gen_project.py 2>&1 | tee gen.log
 
       - name: 环境信息
         continue-on-error: true
@@ -132,15 +135,25 @@ jobs:
         if: always()
         continue-on-error: true
         run: |
-          if [ -f build.log ]; then
-            cp build.log ci-last-build.log
-            git config user.name "ci-bot"
-            git config user.email "ci@trainledger.local"
-            git checkout -B ci-log
-            git add -f ci-last-build.log
-            git commit -m "ci: 构建日志 $(date -u +%FT%TZ)" || true
-            git push -f origin ci-log
-          fi
+          {
+            echo "sha: ${GITHUB_SHA:-?}"
+            echo "run: ${GITHUB_RUN_ID:-?}"
+            echo "ref: ${GITHUB_REF_NAME:-?}"
+            echo
+            for f in gen.log build.log archive.log export.log; do
+              if [ -f "$f" ]; then
+                echo "===== $f ====="
+                tail -120 "$f"
+                echo
+              fi
+            done
+          } > ci-last-build.log
+
+          git config user.name "ci-bot"
+          git config user.email "ci@trainledger.local"
+          git add -f ci-last-build.log
+          git commit -m "ci: 构建日志 $(date -u +%FT%TZ)" || true
+          git push -f origin HEAD:refs/heads/ci-log
 
       - name: 标记失败
         if: steps.build.outcome == 'failure'
