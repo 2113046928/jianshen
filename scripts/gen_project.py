@@ -69,12 +69,15 @@ def _drop_entitlements(lines):
     return out
 
 
-def strip_for_ci(text: str) -> str:
+def strip_for_ci(text: str, watch: bool, widget: bool, entitlements: bool) -> str:
     lines = text.splitlines()
-    lines = _drop_target_block(lines, "TrainLedgerWatch")
-    lines = _drop_dependency(lines, "TrainLedgerWatch")
-    lines = _drop_dependency(lines, "TrainLedgerWidgets")
-    lines = _drop_entitlements(lines)
+    if watch:
+        lines = _drop_target_block(lines, "TrainLedgerWatch")
+        lines = _drop_dependency(lines, "TrainLedgerWatch")
+    if widget:
+        lines = _drop_dependency(lines, "TrainLedgerWidgets")
+    if entitlements:
+        lines = _drop_entitlements(lines)
     return "\n".join(lines) + "\n"
 
 
@@ -89,23 +92,44 @@ def generate(spec_path: Path) -> int:
 
 
 def main() -> int:
-    if os.environ.get("WITH_WATCH", "1") != "0":
+    # 三个独立的裁剪开关，默认全保留（本地开发用完整工程）
+    drop_watch = os.environ.get("WITH_WATCH", "1") == "0"
+    drop_widget = os.environ.get("WITH_WIDGET", "1") == "0"
+    drop_entitlements = os.environ.get("WITH_ENTITLEMENTS", "1") == "0"
+
+    if not (drop_watch or drop_widget or drop_entitlements):
         print("targets: 使用 project.yml（完整工程）")
         return generate(SRC)
 
-    stripped = strip_for_ci(SRC.read_text(encoding="utf-8"))
+    stripped = strip_for_ci(
+        SRC.read_text(encoding="utf-8"),
+        watch=drop_watch,
+        widget=drop_widget,
+        entitlements=drop_entitlements,
+    )
+
     problems = []
-    if "TrainLedgerWatch" in stripped:
+    if drop_watch and "TrainLedgerWatch" in stripped:
         problems.append("仍包含 watch target")
-    if "target: TrainLedgerWidgets" in stripped:
+    if drop_widget and "target: TrainLedgerWidgets" in stripped:
         problems.append("仍嵌入 widget")
-    if "entitlements:" in stripped:
+    if drop_entitlements and "entitlements:" in stripped:
         problems.append("仍包含 entitlements")
     if problems:
-        print(f"精简失败：{problems}", file=sys.stderr)
+        print(f"裁剪失败：{problems}", file=sys.stderr)
         return 2
+
     OUT.write_text(stripped, encoding="utf-8")
-    print("targets: CI 精简模式（无 watch / 无 widget 嵌入 / 无 entitlements）")
+    kept = [
+        name
+        for name, dropped in [
+            ("watch", drop_watch),
+            ("widget", drop_widget),
+            ("entitlements", drop_entitlements),
+        ]
+        if dropped
+    ]
+    print(f"targets: 已裁剪 {', '.join(kept)}")
     return generate(OUT)
 
 
