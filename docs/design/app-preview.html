@@ -1,0 +1,758 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<title>练账 · 交互原型</title>
+<style>
+  :root{
+    --paper:#F4F2EC; --card:#FFFFFF;
+    --ink:#16161A; --ink2:#3C3C42; --ink3:#7A7A82; --ink4:#A8A8B0; --ink5:#C9C9CF;
+    --hair:#E4E1D8; --hair2:#EEECE4;
+    --accent:#D9500E; --accent2:#F2762E;
+    --good:#2F8F6B; --warn:#C48319; --danger:#C8452F;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+  body{
+    font-family:-apple-system,"SF Pro Text","Segoe UI","Microsoft YaHei",sans-serif;
+    -webkit-font-smoothing:antialiased;color:var(--ink);
+    background:#1A1A1D;min-height:100vh;display:flex;align-items:center;justify-content:center;
+    padding:32px 16px;gap:28px;flex-wrap:wrap;
+  }
+  .meta{color:#8B8B93;font-size:13px;line-height:1.9;max-width:300px;}
+  .meta h1{font-size:20px;color:#fff;margin-bottom:10px;font-weight:700;letter-spacing:-.3px;}
+  .meta b{color:#E9E9EE;font-weight:600;}
+  .meta kbd{background:#2A2A2F;border:1px solid #3A3A40;border-radius:5px;padding:1px 6px;font-size:11px;color:#C9C9D1;}
+
+  .device{
+    position:relative;width:393px;height:852px;border-radius:54px;background:var(--paper);
+    box-shadow:0 0 0 12px #0D0D0F,0 0 0 14px #2B2B31,0 40px 80px -20px rgba(0,0,0,.8);
+    overflow:hidden;flex:none;
+  }
+  .island{position:absolute;top:10px;left:50%;transform:translateX(-50%);width:112px;height:30px;
+          border-radius:16px;background:#000;z-index:60;}
+  .statusbar{height:52px;display:flex;align-items:flex-end;justify-content:space-between;
+             padding:0 30px 4px;font-size:13px;font-weight:600;flex:none;z-index:55;position:relative;}
+
+  .screen{position:absolute;inset:0;display:none;flex-direction:column;
+          background:radial-gradient(90% 42% at 50% -6%,#FFFDF6 0%,rgba(255,253,246,0) 62%),
+                     linear-gradient(180deg,#F6F4EE 0%,#F2EFE7 100%);}
+  .screen.active{display:flex;}
+  .screen.hidetabs .scroll{padding-bottom:20px;}
+
+  .nav{display:flex;align-items:flex-end;justify-content:space-between;padding:4px 24px 12px;flex:none;}
+  .nav h2{font-size:32px;font-weight:750;letter-spacing:-.9px;line-height:1.1;}
+  .nav .tools{display:flex;align-items:center;gap:12px;padding-bottom:2px;}
+  .nav .back{font-size:15px;font-weight:600;color:var(--accent);display:flex;align-items:center;gap:3px;}
+  .scroll{flex:1;min-height:0;overflow-y:auto;overflow-x:hidden;padding:0 20px 100px;
+          display:flex;flex-direction:column;gap:16px;scrollbar-width:none;}
+  /* 关键：滚动容器里的卡片不能被 flex 压缩，否则深色卡会只剩标题栏 */
+  .scroll > *{flex:0 0 auto;}
+  .scroll::-webkit-scrollbar{display:none;}
+
+  .card{background:var(--card);border-radius:22px;padding:20px;
+        box-shadow:0 1px 2px rgba(22,22,26,.05),0 10px 30px -12px rgba(22,22,26,.16);
+        display:flex;flex-direction:column;gap:14px;position:relative;}
+  .card::after{content:"";position:absolute;inset:0;border-radius:22px;pointer-events:none;
+               box-shadow:inset 0 1px 0 rgba(255,255,255,.9);}
+  .card.dark{background:linear-gradient(158deg,#232329 0%,#141418 100%);color:#fff;overflow:hidden;
+             box-shadow:0 2px 6px rgba(22,22,26,.18),0 18px 44px -18px rgba(22,22,26,.55);}
+  .card.dark::after{box-shadow:inset 0 1px 0 rgba(255,255,255,.10);}
+  .glow{position:absolute;width:220px;height:220px;right:-70px;top:-90px;border-radius:50%;
+        background:radial-gradient(circle,rgba(217,80,14,.55) 0%,rgba(217,80,14,0) 68%);pointer-events:none;}
+
+  .micro{font-size:11px;font-weight:700;letter-spacing:.7px;color:var(--ink4);}
+  .dark .micro{color:rgba(255,255,255,.45);}
+  .label{font-size:12px;font-weight:650;color:var(--ink3);}
+  .dark .label{color:rgba(255,255,255,.55);}
+  .hero{font-size:52px;font-weight:750;letter-spacing:-2px;line-height:.95;font-variant-numeric:tabular-nums;}
+  .big{font-size:34px;font-weight:750;letter-spacing:-1.1px;line-height:1.14;}
+  .num{font-variant-numeric:tabular-nums;letter-spacing:-.5px;}
+  .row{display:flex;align-items:center;gap:10px;}
+  .between{justify-content:space-between;}
+  .col{display:flex;flex-direction:column;gap:4px;}
+  .hair{height:1px;background:var(--hair2);}
+
+  .week{display:flex;align-items:flex-end;gap:9px;height:62px;}
+  .day{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;gap:7px;height:100%;}
+  .day .bar{width:100%;max-width:24px;min-height:5px;border-radius:6px;background:rgba(255,255,255,.16);}
+  .day.done .bar{background:rgba(255,255,255,.42);}
+  .day.on .bar{background:linear-gradient(180deg,var(--accent2),var(--accent));box-shadow:0 4px 14px -4px rgba(217,80,14,.8);}
+  .day .d{font-size:10px;font-weight:700;color:rgba(255,255,255,.35);}
+  .day.on .d,.day.done .d{color:rgba(255,255,255,.85);}
+
+  .exercise{padding:11px 0;display:flex;align-items:baseline;gap:10px;}
+  .exercise .name{font-size:15.5px;font-weight:550;}
+  .exercise .reps{font-size:11.5px;font-weight:600;color:var(--ink4);letter-spacing:.4px;}
+  .exercise .load{margin-left:auto;font-size:15px;font-weight:700;opacity:.9;}
+  .exercise .load.pro{font-size:11px;font-weight:800;color:var(--accent);letter-spacing:.3px;}
+
+  .btn{height:52px;border-radius:16px;display:flex;align-items:center;justify-content:center;gap:8px;
+       font-size:16px;font-weight:650;border:none;cursor:pointer;font-family:inherit;}
+  .btn.primary{background:#16161A;color:#fff;box-shadow:0 6px 18px -8px rgba(22,22,26,.55);}
+  .btn.accent{background:var(--accent);color:#fff;box-shadow:0 6px 18px -8px rgba(217,80,14,.7);}
+  .btn.ghost{background:rgba(22,22,26,.05);color:var(--ink2);}
+
+  .stats{display:flex;}
+  .stat{flex:1;display:flex;flex-direction:column;gap:5px;min-width:0;}
+  .stat+.stat{border-left:1px solid var(--hair2);padding-left:14px;}
+  .stat .v{font-size:21px;font-weight:700;letter-spacing:-.7px;}
+  .stat .v small{font-size:11px;font-weight:600;color:var(--ink4);margin-left:2px;}
+
+  .track{height:6px;border-radius:99px;background:var(--hair2);overflow:hidden;}
+  .track>i{display:block;height:100%;border-radius:99px;}
+  .barline{display:flex;flex-direction:column;gap:7px;}
+  .barline .top{display:flex;align-items:baseline;gap:6px;font-size:14px;font-weight:550;}
+  .barline .top .v{margin-left:auto;font-size:13px;font-weight:700;}
+  .barline .top .st{font-size:11px;font-weight:700;}
+
+  .seg{display:flex;background:rgba(22,22,26,.05);border-radius:12px;padding:3px;gap:2px;}
+  .seg div{flex:1;text-align:center;font-size:13px;font-weight:600;padding:7px 0;border-radius:9px;color:var(--ink3);}
+  .seg div.on{background:#fff;color:var(--ink);box-shadow:0 1px 3px rgba(22,22,26,.10);}
+
+  .pill{font-size:11px;font-weight:700;letter-spacing:.3px;padding:5px 9px;border-radius:8px;}
+  .pill.solid{background:rgba(22,22,26,.055);color:var(--ink2);}
+  .pill.accent{background:var(--accent);color:#fff;}
+  .pill.soft{background:rgba(47,143,107,.12);color:var(--good);}
+  .pill.warn{background:rgba(196,131,25,.14);color:var(--warn);}
+
+  .listrow{display:flex;align-items:center;gap:12px;padding:12px 0;}
+  .listrow .title{font-size:15px;font-weight:550;}
+  .listrow .sub{font-size:11.5px;color:var(--ink4);margin-top:2px;}
+  .listrow .right{margin-left:auto;font-size:13px;font-weight:650;color:var(--ink3);}
+  .listrow .chev{color:var(--ink5);font-size:15px;}
+
+  .setrow{display:flex;align-items:center;gap:10px;padding:8px 0;}
+  .setrow .idx{width:26px;font-size:12px;font-weight:700;color:var(--ink4);}
+  .setrow .field{flex:1;height:34px;border-radius:9px;border:1px solid var(--hair);
+                 display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:600;}
+  .setrow .unit{font-size:11px;color:var(--ink4);}
+  .setrow .check{width:26px;height:26px;border-radius:50%;border:1.5px solid var(--ink5);
+                 display:flex;align-items:center;justify-content:center;font-size:12px;color:transparent;}
+  .setrow .check.on{background:var(--good);border-color:var(--good);color:#fff;}
+
+  .tabbar{position:absolute;left:0;right:0;bottom:0;height:84px;display:flex;align-items:flex-start;
+          padding-top:9px;background:rgba(244,242,236,.92);backdrop-filter:blur(22px) saturate(180%);
+          border-top:1px solid rgba(22,22,26,.06);z-index:50;}
+  .tab{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;font-size:10px;
+       font-weight:650;color:var(--ink4);position:relative;cursor:pointer;background:none;border:none;font-family:inherit;}
+  .tab.on{color:var(--accent);}
+  .tab.on::after{content:"";position:absolute;top:-9px;width:18px;height:2.5px;border-radius:2px;background:var(--accent);}
+  .tab svg{width:22px;height:22px;stroke:currentColor;fill:none;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round;}
+
+  .toast{position:absolute;left:50%;bottom:104px;transform:translateX(-50%) translateY(10px);
+         background:rgba(22,22,26,.92);color:#fff;font-size:13px;font-weight:600;padding:10px 16px;
+         border-radius:12px;opacity:0;transition:.25s;pointer-events:none;z-index:80;}
+  .toast.on{opacity:1;transform:translateX(-50%) translateY(0);}
+</style>
+</head>
+<body>
+
+<div class="device">
+  <div class="island"></div>
+
+  <!-- ============ 今天 ============ -->
+  <section class="screen active" id="today" data-tab="today">
+    <div class="statusbar"><span>9:41</span><span>◍ ▮▮▮</span></div>
+    <div class="nav"><h2>今天</h2>
+      <div class="tools">
+        <div onclick="go('formcheck')" style="cursor:pointer">
+          <svg width="46" height="46" viewBox="0 0 46 46">
+            <defs><linearGradient id="ring" x1="0" y1="0" x2="1" y2="1">
+              <stop offset="0" stop-color="#F5A05C"/><stop offset="1" stop-color="#D9500E"/></linearGradient></defs>
+            <circle cx="23" cy="23" r="20" fill="none" stroke="#E4E1D8" stroke-width="3"/>
+            <circle cx="23" cy="23" r="20" fill="none" stroke="url(#ring)" stroke-width="3"
+                    stroke-linecap="round" stroke-dasharray="125.7" stroke-dashoffset="62.8"
+                    transform="rotate(-90 23 23)"/>
+            <text x="23" y="27" text-anchor="middle" font-size="11" font-weight="700" fill="#3C3C42">2/4</text>
+          </svg>
+        </div>
+      </div>
+    </div>
+    <div class="scroll">
+      <div class="col" style="gap:5px">
+        <div class="micro" style="color:var(--ink4)">11月22日 周六 · 减脂期</div>
+        <div style="font-size:13.5px;color:var(--ink3)">今天练推日，6 个动作，约 54 分钟</div>
+      </div>
+
+      <div class="card dark">
+        <div class="glow"></div>
+        <div class="row between">
+          <div class="micro">本周</div>
+          <div class="label">减脂期 · 目标 4 练</div>
+        </div>
+        <div class="row" style="align-items:flex-end;gap:12px">
+          <div class="hero" style="color:#fff">2<span style="font-size:22px;opacity:.45">/4</span></div>
+          <div class="col" style="gap:3px;padding-bottom:6px">
+            <div style="font-size:13px;font-weight:600;color:rgba(255,255,255,.78)">已完成 12.4 吨</div>
+            <div style="font-size:12px;color:rgba(255,255,255,.35)">还差 2 次</div>
+          </div>
+        </div>
+        <div class="week">
+          <div class="day done"><div class="bar" style="height:100%"></div><div class="d">一</div></div>
+          <div class="day done"><div class="bar" style="height:78%"></div><div class="d">二</div></div>
+          <div class="day"><div class="bar" style="height:5px"></div><div class="d">三</div></div>
+          <div class="day on"><div class="bar" style="height:56%"></div><div class="d">四</div></div>
+          <div class="day"><div class="bar" style="height:5px"></div><div class="d">五</div></div>
+          <div class="day"><div class="bar" style="height:5px"></div><div class="d">六</div></div>
+          <div class="day"><div class="bar" style="height:5px"></div><div class="d">日</div></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="row between" style="align-items:flex-start">
+          <div class="col" style="gap:4px">
+            <div class="big">推日</div>
+            <div class="label" style="color:var(--ink4)">胸 · 肩 · 三头 · 6 个动作</div>
+          </div>
+          <div class="pill solid">第 5 练</div>
+        </div>
+        <div>
+          <div class="exercise"><span class="name">杠铃卧推</span><span class="reps">6–10 次</span><span class="load num">82.5</span></div><div class="hair"></div>
+          <div class="exercise"><span class="name">上斜哑铃卧推</span><span class="reps">8–12 次</span><span class="load num">30</span></div><div class="hair"></div>
+          <div class="exercise"><span class="name">站姿杠铃推举</span><span class="reps">6–10 次</span><span class="load num">45</span></div><div class="hair"></div>
+          <div class="exercise"><span class="name">侧平举</span><span class="reps">12–15 次</span><span class="load num">12</span></div><div class="hair"></div>
+          <div class="exercise"><span class="name">绳索下压</span><span class="reps">10–15 次</span><span class="load pro">🔒 PRO</span></div><div class="hair"></div>
+          <div class="exercise"><span class="name">绳索夹胸</span><span class="reps">12–15 次</span><span class="load num">20</span></div>
+        </div>
+        <button class="btn primary" onclick="go('workout')">▸ 开始训练</button>
+      </div>
+
+      <div class="card">
+        <div class="row between"><div class="micro">上次训练</div><div class="label" style="color:var(--ink4)">周一</div></div>
+        <div class="stats">
+          <div class="stat"><div class="micro">容量</div><div class="v">4.2<small>吨</small></div></div>
+          <div class="stat"><div class="micro">组数</div><div class="v">18</div></div>
+          <div class="stat"><div class="micro">PR</div><div class="v" style="color:var(--accent)">1</div></div>
+        </div>
+      </div>
+
+      <div class="card" onclick="go('phase')" style="cursor:pointer">
+        <div class="row between"><div class="micro">力量保持率</div><div class="pill soft">95%</div></div>
+        <div style="font-size:13px;color:var(--ink3)">减脂 5 周，四大项平均只掉 5%。当前速度合理。</div>
+        <div class="row" style="color:var(--accent);font-size:13px;font-weight:650">查看分项 <span>›</span></div>
+      </div>
+
+      <div class="card">
+        <div class="row between"><div class="micro">本周容量</div><div class="label" style="color:var(--ink4)">目标区间</div></div>
+        <div class="barline"><div class="top"><span>胸</span><span class="v">8 组</span><span class="st" style="color:var(--warn)">不足</span></div>
+          <div class="track"><i style="width:40%;background:var(--warn)"></i></div></div>
+        <div class="barline"><div class="top"><span>背</span><span class="v">14 组</span><span class="st" style="color:var(--good)">达标</span></div>
+          <div class="track"><i style="width:64%;background:var(--good)"></i></div></div>
+        <div class="barline"><div class="top"><span>腿</span><span class="v">16 组</span><span class="st" style="color:var(--good)">达标</span></div>
+          <div class="track"><i style="width:73%;background:var(--good)"></i></div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ 记录 ============ -->
+  <section class="screen" id="history" data-tab="history">
+    <div class="statusbar"><span>9:41</span><span>◍ ▮▮▮</span></div>
+    <div class="nav"><h2>记录</h2></div>
+    <div class="scroll">
+      <div class="seg"><div class="on">全部</div><div>本月</div><div>PR</div></div>
+      <div class="card" style="gap:6px">
+        <div class="listrow" style="padding-top:0">
+          <div class="col"><div class="title">推日</div><div class="sub">今天 19:20 · 6 个动作</div></div>
+          <div class="right">4.2 吨</div><div class="chev">›</div>
+        </div>
+        <div class="hair"></div>
+        <div class="listrow">
+          <div class="col"><div class="title">拉日</div><div class="sub">周三 18:40 · 6 个动作</div></div>
+          <div class="right">5.1 吨</div><div class="chev">›</div>
+        </div>
+        <div class="hair"></div>
+        <div class="listrow" style="padding-bottom:0">
+          <div class="col"><div class="title">腿日</div><div class="sub">周一 19:05 · 5 个动作</div></div>
+          <div class="right">6.3 吨</div><div class="chev">›</div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="row between"><div class="micro">累计</div><div class="label" style="color:var(--ink4)">全部时间</div></div>
+        <div class="stats">
+          <div class="stat"><div class="micro">训练</div><div class="v">23<small>次</small></div></div>
+          <div class="stat"><div class="micro">容量</div><div class="v">96.8<small>吨</small></div></div>
+          <div class="stat"><div class="micro">PR</div><div class="v" style="color:var(--accent)">7</div></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ 饮食 ============ -->
+  <section class="screen" id="nutrition" data-tab="nutrition">
+    <div class="statusbar"><span>9:41</span><span>◍ ▮▮▮</span></div>
+    <div class="nav"><h2>饮食</h2></div>
+    <div class="scroll">
+      <div class="card dark">
+        <div class="glow"></div>
+        <div class="row between"><div class="micro">每日目标</div><div class="label">减脂期</div></div>
+        <div class="row" style="align-items:flex-end;gap:10px">
+          <div class="hero" style="color:#fff">2262</div>
+          <div style="font-size:15px;font-weight:600;color:rgba(255,255,255,.55);padding-bottom:6px">千卡</div>
+          <div class="col" style="margin-left:auto;align-items:flex-end;gap:3px;padding-bottom:6px">
+            <div style="font-size:11.5px;color:rgba(255,255,255,.35)">BMR 1780 · TDEE 2759</div>
+            <div style="font-size:11.5px;font-weight:600;color:rgba(255,255,255,.8)">蛋白 176 · 脂肪 72 · 碳水 228</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="micro">宏量分配</div>
+        <div class="barline"><div class="top"><span>蛋白</span><span class="v">176 g · 704 千卡</span></div>
+          <div class="track"><i style="width:31%;background:var(--accent)"></i></div></div>
+        <div class="barline"><div class="top"><span>脂肪</span><span class="v">72 g · 648 千卡</span></div>
+          <div class="track"><i style="width:29%;background:var(--warn)"></i></div></div>
+        <div class="barline"><div class="top"><span>碳水</span><span class="v">228 g · 910 千卡</span></div>
+          <div class="track"><i style="width:40%;background:var(--good)"></i></div></div>
+      </div>
+
+      <div class="card">
+        <div class="row between"><div class="micro">分餐建议</div><div class="label" style="color:var(--ink4)">4 餐</div></div>
+        <div class="listrow" style="padding-top:2px"><div class="col"><div class="title">早餐</div><div class="sub">蛋白 44 g</div></div><div class="right">588 千卡</div></div>
+        <div class="hair"></div>
+        <div class="listrow"><div class="col"><div class="title">午餐</div><div class="sub">蛋白 44 g</div></div><div class="right">724 千卡</div></div>
+        <div class="hair"></div>
+        <div class="listrow"><div class="col"><div class="title">晚餐</div><div class="sub">蛋白 44 g</div></div><div class="right">633 千卡</div></div>
+        <div class="hair"></div>
+        <div class="listrow" style="padding-bottom:2px"><div class="col"><div class="title">加餐</div><div class="sub">蛋白 44 g</div></div><div class="right">317 千卡</div></div>
+      </div>
+
+      <div class="card">
+        <div class="row between"><div class="micro">份量参考</div><div class="label" style="color:var(--ink4)">每 100 g</div></div>
+        <div class="listrow" style="padding:8px 0"><div class="title">鸡胸肉</div><div class="right">31 g 蛋白</div></div>
+        <div class="hair"></div>
+        <div class="listrow" style="padding:8px 0"><div class="title">米饭（熟）</div><div class="right">26 g 碳水</div></div>
+        <div class="hair"></div>
+        <div class="listrow" style="padding:8px 0"><div class="title">全蛋</div><div class="right">13 g 蛋白 / 个</div></div>
+        <div class="hair"></div>
+        <div class="listrow" style="padding:8px 0"><div class="title">牛奶</div><div class="right">3.3 g 蛋白 / 100 ml</div></div>
+      </div>
+
+      <div class="card" onclick="go('body')" style="cursor:pointer">
+        <div class="row between"><div class="micro">身体成分</div><div class="pill solid">由围度估算</div></div>
+        <div class="row" style="align-items:baseline;gap:6px">
+          <div style="font-size:30px;font-weight:750;letter-spacing:-1px">16.1</div>
+          <div style="font-size:13px;color:var(--ink3)">% 体脂 · 健壮</div>
+        </div>
+        <div style="font-size:12px;color:var(--ink4)">腰 85 / 颈 38 cm · 目标 12% 需减 3.3 kg</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ 周报 ============ -->
+  <section class="screen" id="report" data-tab="report">
+    <div class="statusbar"><span>9:41</span><span>◍ ▮▮▮</span></div>
+    <div class="nav"><h2>周报</h2></div>
+    <div class="scroll">
+      <div class="seg"><div class="on">近 7 天</div><div>前 7 天</div><div>更早 7 天</div></div>
+      <div class="card dark">
+        <div class="glow"></div>
+        <div class="row between"><div class="micro">完成率</div><div class="label">减脂期</div></div>
+        <div class="row" style="align-items:flex-end;gap:10px">
+          <div class="hero" style="color:#fff">75<span style="font-size:22px;opacity:.45">%</span></div>
+          <div class="col" style="gap:3px;padding-bottom:8px">
+            <div style="font-size:13px;font-weight:600;color:rgba(255,255,255,.7)">3 / 4 次</div>
+            <div style="font-size:12px;color:rgba(255,255,255,.4)">差一次就满</div>
+          </div>
+        </div>
+        <div class="track" style="background:rgba(255,255,255,.12)">
+          <i style="width:75%;background:linear-gradient(90deg,var(--accent2),var(--accent))"></i></div>
+      </div>
+      <div class="card">
+        <div class="stats">
+          <div class="stat"><div class="micro">总容量</div><div class="v">12.4<small>吨</small></div></div>
+          <div class="stat"><div class="micro">完成组数</div><div class="v">54</div></div>
+          <div class="stat"><div class="micro">PR</div><div class="v" style="color:var(--accent)">2</div></div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="row between"><div class="micro">肌群容量</div><div class="label" style="color:var(--ink4)">目标区间</div></div>
+        <div class="barline"><div class="top"><span>胸</span><span class="v">8 组</span><span class="st" style="color:var(--warn)">不足</span></div><div class="track"><i style="width:40%;background:var(--warn)"></i></div></div>
+        <div class="barline"><div class="top"><span>背</span><span class="v">14 组</span><span class="st" style="color:var(--good)">达标</span></div><div class="track"><i style="width:64%;background:var(--good)"></i></div></div>
+        <div class="barline"><div class="top"><span>腿</span><span class="v">16 组</span><span class="st" style="color:var(--good)">达标</span></div><div class="track"><i style="width:73%;background:var(--good)"></i></div></div>
+        <div class="barline"><div class="top"><span>肩</span><span class="v">6 组</span><span class="st" style="color:var(--warn)">不足</span></div><div class="track"><i style="width:38%;background:var(--warn)"></i></div></div>
+        <div class="barline"><div class="top"><span>手臂</span><span class="v">9 组</span><span class="st" style="color:var(--good)">达标</span></div><div class="track"><i style="width:64%;background:var(--good)"></i></div></div>
+        <div class="barline"><div class="top"><span>核心</span><span class="v">2 组</span><span class="st" style="color:var(--warn)">不足</span></div><div class="track"><i style="width:17%;background:var(--warn)"></i></div></div>
+      </div>
+      <div class="card" style="gap:10px">
+        <div class="micro">下周建议</div>
+        <div style="font-size:13.5px;color:var(--ink2);line-height:1.55">胸和肩各差 2 组以上，下次推日给卧推和侧平举各加 1 组；核心不需要刻意补，深蹲和硬拉已经够了。</div>
+        <div class="row"><div class="pill warn">胸 +2 组</div><div class="pill warn">肩 +2 组</div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ 我的 ============ -->
+  <section class="screen" id="settings" data-tab="settings">
+    <div class="statusbar"><span>9:41</span><span>◍ ▮▮▮</span></div>
+    <div class="nav"><h2>我的</h2></div>
+    <div class="scroll">
+      <div class="card" style="padding:16px 18px">
+        <div class="row">
+          <div style="width:44px;height:44px;border-radius:50%;background:linear-gradient(140deg,#F2A26B,#D9500E);display:flex;align-items:center;justify-content:center;color:#fff;font-weight:750;font-size:16px">练</div>
+          <div class="col"><div style="font-size:16px;font-weight:650">练账用户</div><div class="sub" style="font-size:11.5px;color:var(--ink4)">减脂期 · 第 5 周 · 每周 4 练</div></div>
+          <div class="pill accent" style="margin-left:auto">PRO</div>
+        </div>
+      </div>
+
+      <div class="card" style="padding:6px 18px">
+        <div class="listrow"><div class="title">训练计划</div><div class="right">推拉腿</div><div class="chev">›</div></div>
+        <div class="hair"></div>
+        <div class="listrow"><div class="title">每周目标</div><div class="right">4 练</div><div class="chev">›</div></div>
+        <div class="hair"></div>
+        <div class="listrow"><div class="title">当前体重</div><div class="right">72.5 kg</div><div class="chev">›</div></div>
+      </div>
+
+      <div class="card" style="padding:6px 18px">
+        <div class="listrow" onclick="go('phase')"><div class="title">阶段与力量保持率</div><div class="right" style="color:var(--accent)">95%</div><div class="chev">›</div></div>
+        <div class="hair"></div>
+        <div class="listrow" onclick="go('body')"><div class="title">身体成分</div><div class="right">16.1%</div><div class="chev">›</div></div>
+        <div class="hair"></div>
+        <div class="listrow" onclick="go('formcheck')"><div class="title">动作评估</div><div class="right">深蹲</div><div class="chev">›</div></div>
+        <div class="hair"></div>
+        <div class="listrow" onclick="go('packs')"><div class="title">计划包</div><div class="right">2 个已解锁</div><div class="chev">›</div></div>
+      </div>
+
+      <div class="card" style="padding:6px 18px">
+        <div class="listrow"><div class="title">导出 CSV</div><div class="chev">›</div></div>
+        <div class="hair"></div>
+        <div class="listrow"><div class="title">备份与恢复</div><div class="right">刚刚</div><div class="chev">›</div></div>
+        <div class="hair"></div>
+        <div class="listrow" onclick="go('paywall')"><div class="title">升级 Pro</div><div class="right" style="color:var(--accent)">已解锁</div><div class="chev">›</div></div>
+      </div>
+
+      <div style="text-align:center;font-size:11px;color:var(--ink5);padding:8px 0 4px">
+        练账 0.2.0 · 数据只保存在本机
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ 训练中（全屏） ============ -->
+  <section class="screen hidetabs" id="workout" data-tab="workout">
+    <div class="statusbar"><span>9:41</span><span>◍ ▮▮▮</span></div>
+    <div class="nav">
+      <div class="back" onclick="go('today')">‹ 返回</div>
+      <div style="font-size:15px;font-weight:650">减脂期 · 训练中</div>
+      <div style="font-size:15px;font-weight:650;color:var(--accent)">完成</div>
+    </div>
+    <div class="scroll">
+      <div class="card">
+        <div class="stats">
+          <div class="stat"><div class="micro">完成组数</div><div class="v">7</div></div>
+          <div class="stat"><div class="micro">总容量</div><div class="v">1.8<small>吨</small></div></div>
+          <div class="stat"><div class="micro">动作数</div><div class="v">6</div></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="row between" style="align-items:flex-start">
+          <div class="col" style="gap:3px">
+            <div style="font-size:16px;font-weight:650">杠铃卧推</div>
+            <div style="font-size:11.5px;color:var(--ink3)">6–10 次 · 休息 180 秒</div>
+          </div>
+          <div class="pill solid">建议 82.5</div>
+        </div>
+        <div>
+          <div class="setrow"><div class="idx">热身</div><div class="field">40</div><div class="unit">kg</div><div class="field">8</div><div class="unit">次</div><div class="check on">✓</div></div>
+          <div class="setrow"><div class="idx">1</div><div class="field">82.5</div><div class="unit">kg</div><div class="field">8</div><div class="unit">次</div><div class="check on">✓</div></div>
+          <div class="setrow"><div class="idx">2</div><div class="field">82.5</div><div class="unit">kg</div><div class="field">8</div><div class="unit">次</div><div class="check on">✓</div></div>
+          <div class="setrow"><div class="idx">3</div><div class="field">82.5</div><div class="unit">kg</div><div class="field">8</div><div class="unit">次</div><div class="check"></div></div>
+        </div>
+        <div style="font-size:13px;color:var(--accent);font-weight:600">＋ 加一组</div>
+      </div>
+
+      <div class="card">
+        <div class="row between" style="align-items:flex-start">
+          <div class="col" style="gap:3px">
+            <div style="font-size:16px;font-weight:650">上斜哑铃卧推</div>
+            <div style="font-size:11.5px;color:var(--ink3)">8–12 次 · 休息 120 秒</div>
+          </div>
+          <div class="pill solid">建议 30</div>
+        </div>
+        <div>
+          <div class="setrow"><div class="idx">1</div><div class="field">30</div><div class="unit">kg</div><div class="field">10</div><div class="unit">次</div><div class="check on">✓</div></div>
+          <div class="setrow"><div class="idx">2</div><div class="field">30</div><div class="unit">kg</div><div class="field">10</div><div class="unit">次</div><div class="check"></div></div>
+        </div>
+      </div>
+    </div>
+    <div style="position:absolute;left:16px;right:16px;bottom:24px;height:56px;border-radius:18px;
+                background:#16161A;color:#fff;display:flex;align-items:center;gap:14px;padding:0 18px;
+                box-shadow:0 10px 30px -10px rgba(0,0,0,.6);">
+      <span style="font-size:18px">⏱</span>
+      <span style="font-size:18px;font-weight:700;font-variant-numeric:tabular-nums">1:32</span>
+      <span style="font-size:12px;color:rgba(255,255,255,.55)">组间休息</span>
+      <span style="margin-left:auto;font-size:14px;font-weight:650">跳过</span>
+    </div>
+  </section>
+
+  <!-- ============ 阶段 ============ -->
+  <section class="screen hidetabs" id="phase" data-tab="phase">
+    <div class="statusbar"><span>9:41</span><span>◍ ▮▮▮</span></div>
+    <div class="nav"><div class="back" onclick="go('today')">‹ 返回</div>
+      <div style="font-size:15px;font-weight:650">阶段与保持率</div><div style="width:44px"></div></div>
+    <div class="scroll">
+      <div class="card dark">
+        <div class="glow"></div>
+        <div class="row between"><div class="micro">综合力量保持率</div><div class="label">减脂期 · 第 5 周</div></div>
+        <div class="row" style="align-items:baseline;gap:10px">
+          <div class="hero" style="color:var(--good)">95<span style="font-size:22px;opacity:.5">%</span></div>
+          <div style="font-size:11.5px;color:rgba(255,255,255,.35);margin-left:auto;text-align:right;line-height:1.5">
+            阶段内最佳 1RM<br>÷ 阶段前最佳 1RM</div>
+        </div>
+        <div style="font-size:12px;color:rgba(255,255,255,.7);line-height:1.5">减脂期力量小幅下滑是正常的。低于 90% 才需要收小热量缺口。</div>
+      </div>
+
+      <div class="card">
+        <div class="micro">分项</div>
+        <div class="listrow" style="padding:8px 0"><div class="title">卧推</div><div class="right" style="color:var(--good)">100%</div><div class="pill soft">保持</div></div>
+        <div class="hair"></div>
+        <div class="listrow" style="padding:8px 0"><div class="title">深蹲</div><div class="right" style="color:var(--good)">94%</div><div class="pill soft">保持</div></div>
+        <div class="hair"></div>
+        <div class="listrow" style="padding:8px 0"><div class="title">硬拉</div><div class="right" style="color:var(--good)">96%</div><div class="pill soft">保持</div></div>
+        <div class="hair"></div>
+        <div class="listrow" style="padding:8px 0"><div class="title">推举</div><div class="right" style="color:var(--warn)">88%</div><div class="pill warn">留意</div></div>
+      </div>
+
+      <div class="card">
+        <div class="micro">建议</div>
+        <div style="font-size:13.5px;color:var(--ink2);line-height:1.6">推举掉得最多，接下来两周保持重量不降，先把它稳住；热量缺口暂时不要加大。</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ 身体成分 ============ -->
+  <section class="screen hidetabs" id="body" data-tab="body">
+    <div class="statusbar"><span>9:41</span><span>◍ ▮▮▮</span></div>
+    <div class="nav"><div class="back" onclick="go('nutrition')">‹ 返回</div>
+      <div style="font-size:15px;font-weight:650">身体成分</div><div style="width:44px"></div></div>
+    <div class="scroll">
+      <div class="card dark">
+        <div class="glow"></div>
+        <div class="row between"><div class="micro">围度法估算</div><div class="pill accent">健壮</div></div>
+        <div class="row" style="align-items:baseline;gap:4px">
+          <div class="hero" style="color:#fff">16.1</div>
+          <div style="font-size:22px;font-weight:700;color:rgba(255,255,255,.35)">%</div>
+          <div style="margin-left:auto;font-size:11.5px;color:rgba(255,255,255,.35)">健康区间 10–20%</div>
+        </div>
+        <div style="height:1px;background:rgba(255,255,255,.12)"></div>
+        <div class="row" style="gap:0">
+          <div class="col" style="flex:1;gap:5px"><div class="micro">BMI</div><div style="font-size:21px;font-weight:700;color:#fff">24.7</div></div>
+          <div style="width:1px;height:30px;background:rgba(255,255,255,.12);margin:0 14px"></div>
+          <div class="col" style="flex:1;gap:5px"><div class="micro">瘦体重</div><div style="font-size:21px;font-weight:700;color:#fff">67.1<span style="font-size:11px;color:rgba(255,255,255,.35)">kg</span></div></div>
+          <div style="width:1px;height:30px;background:rgba(255,255,255,.12);margin:0 14px"></div>
+          <div class="col" style="flex:1;gap:5px"><div class="micro">脂肪量</div><div style="font-size:21px;font-weight:700;color:#fff">12.9<span style="font-size:11px;color:rgba(255,255,255,.35)">kg</span></div></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="micro">围度输入</div>
+        <div class="listrow" style="padding:8px 0"><div class="title">腰围</div><div class="right">85 cm</div></div>
+        <div class="hair"></div>
+        <div class="listrow" style="padding:8px 0"><div class="title">颈围</div><div class="right">38 cm</div></div>
+        <div class="hair"></div>
+        <div class="listrow" style="padding:8px 0"><div class="title">身高 / 体重</div><div class="right">180 cm / 80 kg</div></div>
+      </div>
+
+      <div class="card">
+        <div class="row between"><div class="micro">目标</div><div class="pill solid">12%</div></div>
+        <div class="row" style="align-items:baseline;gap:6px">
+          <div style="font-size:30px;font-weight:750;letter-spacing:-1px">76.3</div>
+          <div style="font-size:13px;color:var(--ink3)">kg（需减 3.7 kg）</div>
+        </div>
+        <div style="font-size:12px;color:var(--ink4);line-height:1.6">假设瘦体重不变。减脂期配合力量训练，瘦体重通常会保住一部分，实际目标体重可能更高。</div>
+      </div>
+
+      <div class="card">
+        <div class="micro">两种算法对比</div>
+        <div class="listrow" style="padding:8px 0"><div class="title">围度法</div><div class="right">16.1%</div></div>
+        <div class="hair"></div>
+        <div class="listrow" style="padding:8px 0"><div class="title">Deurenberg</div><div class="right">20.3%</div></div>
+        <div class="hair"></div>
+        <div style="font-size:12px;color:var(--ink4);line-height:1.6;padding-top:4px">两者差 4 个点属于正常。看趋势比看绝对值有意义，误差约 ±3–5%。</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ 计划包 ============ -->
+  <section class="screen hidetabs" id="packs" data-tab="packs">
+    <div class="statusbar"><span>9:41</span><span>◍ ▮▮▮</span></div>
+    <div class="nav"><div class="back" onclick="go('settings')">‹ 返回</div>
+      <div style="font-size:15px;font-weight:650">计划包</div><div style="width:44px"></div></div>
+    <div class="scroll">
+      <div class="card">
+        <div class="row between"><div class="col" style="gap:4px"><div style="font-size:18px;font-weight:700">减脂保力</div><div style="font-size:11.5px;color:var(--ink4)">8 周 · 每周 4 练 · 大重量低次数</div></div><div class="pill accent">使用中</div></div>
+        <div style="font-size:13px;color:var(--ink3);line-height:1.55">边减脂边守力量。组数逐步减，强度不掉，配合减载周。</div>
+        <button class="btn ghost" onclick="toast('已切换到「减脂保力」')">当前计划</button>
+      </div>
+      <div class="card">
+        <div class="row between"><div class="col" style="gap:4px"><div style="font-size:18px;font-weight:700">家庭哑铃</div><div style="font-size:11.5px;color:var(--ink4)">6 周 · 每周 3 练 · 一对哑铃</div></div><div class="pill soft">已解锁</div></div>
+        <div style="font-size:13px;color:var(--ink3);line-height:1.55">只有一对哑铃和一个可调凳时的全身训练，每次 35–40 分钟。</div>
+        <button class="btn ghost" onclick="toast('已激活「家庭哑铃」')">激活</button>
+      </div>
+      <div class="card">
+        <div class="row between"><div class="col" style="gap:4px"><div style="font-size:18px;font-weight:700">女性塑形</div><div style="font-size:11.5px;color:var(--ink4)">8 周 · 每周 3 练 · 臀腿优先</div></div><div class="pill solid">¥45</div></div>
+        <div style="font-size:13px;color:var(--ink3);line-height:1.55">臀腿为主，上肢做维持，避免练成「上身很壮」的失衡。</div>
+        <button class="btn primary" onclick="toast('这是原型，不会真的扣款')">解锁 ¥45</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ 付费墙 ============ -->
+  <section class="screen hidetabs" id="paywall" data-tab="paywall">
+    <div class="statusbar"><span>9:41</span><span>◍ ▮▮▮</span></div>
+    <div class="nav"><div class="back" onclick="go('settings')">‹ 返回</div><div style="width:44px"></div></div>
+    <div class="scroll">
+      <div class="col" style="gap:6px;padding:8px 0 4px">
+        <div class="micro" style="color:var(--accent)">一次性买断 · 无订阅</div>
+        <div style="font-size:30px;font-weight:750;letter-spacing:-1px;line-height:1.15">把「练什么、多重」<br>算清楚。</div>
+      </div>
+      <div class="card">
+        <div class="listrow"><div class="col"><div class="title">配重建议</div><div class="sub">基于最近 8 次训练，给出今天该推多少</div></div><div class="pill soft">PRO</div></div>
+        <div class="hair"></div>
+        <div class="listrow"><div class="col"><div class="title">力量保持率</div><div class="sub">减脂期掉的是脂肪还是肌肉</div></div><div class="pill soft">PRO</div></div>
+        <div class="hair"></div>
+        <div class="listrow"><div class="col"><div class="title">容量与周期分析</div><div class="sub">哪块练少了、下周加几组</div></div><div class="pill soft">PRO</div></div>
+      </div>
+      <div class="card" style="align-items:center;gap:8px">
+        <div class="row" style="align-items:baseline;gap:4px"><span style="font-size:34px;font-weight:750;letter-spacing:-1px">¥68</span><span style="font-size:13px;color:var(--ink4)">一次买断</span></div>
+        <div style="font-size:11.5px;color:var(--ink4)">记录功能永久免费</div>
+      </div>
+      <button class="btn accent" onclick="toast('这是原型，不会真的扣款')">立即解锁</button>
+      <div style="text-align:center;font-size:11.5px;color:var(--ink5)">恢复购买</div>
+    </div>
+  </section>
+
+  <!-- ============ 建档 ============ -->
+  <section class="screen hidetabs" id="onboarding" data-tab="onboarding">
+    <div class="statusbar"><span>9:41</span><span>◍ ▮▮▮</span></div>
+    <div style="padding:8px 24px 0">
+      <div class="row" style="gap:6px">
+        <div style="flex:1;height:3px;border-radius:2px;background:var(--accent)"></div>
+        <div style="flex:1;height:3px;border-radius:2px;background:var(--accent)"></div>
+        <div style="flex:1;height:3px;border-radius:2px;background:var(--accent)"></div>
+        <div style="flex:1;height:3px;border-radius:2px;background:var(--hair)"></div>
+        <div style="flex:1;height:3px;border-radius:2px;background:var(--hair)"></div>
+      </div>
+      <div class="row between" style="margin-top:10px">
+        <div style="font-size:12px;color:var(--ink3)">第 3 步，共 5 步</div>
+        <div style="font-size:12px;color:var(--ink5)">跳过</div>
+      </div>
+    </div>
+    <div class="scroll" style="padding-top:20px">
+      <div style="font-size:26px;font-weight:750;letter-spacing:-.6px;line-height:1.25">你一周能练几次？</div>
+      <div style="font-size:13px;color:var(--ink3);margin-top:-6px">按真实的来，少一次也比定高了做不到强。</div>
+      <div class="card" style="padding:10px">
+        <div class="listrow" style="padding:12px 10px"><div class="title">2 天</div><div class="right">入门</div></div>
+        <div class="hair"></div>
+        <div class="listrow" style="padding:12px 10px;background:rgba(217,80,14,.06);border-radius:12px">
+          <div class="title" style="color:var(--accent);font-weight:700">3 天</div><div class="right" style="color:var(--accent)">✓ 推荐</div>
+        </div>
+        <div class="hair"></div>
+        <div class="listrow" style="padding:12px 10px"><div class="title">4 天</div><div class="right">进阶</div></div>
+        <div class="hair"></div>
+        <div class="listrow" style="padding:12px 10px"><div class="title">5 天以上</div><div class="right">高阶</div></div>
+      </div>
+      <div class="card" style="gap:8px">
+        <div class="micro">将为你生成</div>
+        <div style="font-size:13.5px;color:var(--ink2);line-height:1.6">增肌 · 每周 3 练 · 全身训练<br><span style="color:var(--ink4);font-size:12px">新手一律从全身开始，比一上来就五分化更容易坚持。</span></div>
+      </div>
+      <button class="btn primary" onclick="go('today')">下一步</button>
+    </div>
+  </section>
+
+  <!-- ============ 动作评估 ============ -->
+  <section class="screen hidetabs" id="formcheck" data-tab="formcheck">
+    <div class="statusbar"><span>9:41</span><span>◍ ▮▮▮</span></div>
+    <div class="nav"><div class="back" onclick="go('settings')">‹ 返回</div>
+      <div style="font-size:15px;font-weight:650">动作评估</div><div style="width:44px"></div></div>
+    <div class="scroll">
+      <div class="card dark">
+        <div class="glow"></div>
+        <div class="row between"><div class="micro">深蹲 · 侧向 30 秒</div><div class="label">已完成</div></div>
+        <div class="row" style="align-items:baseline;gap:8px">
+          <div class="hero" style="color:#fff">12</div>
+          <div style="font-size:15px;font-weight:600;color:rgba(255,255,255,.55);padding-bottom:6px">次</div>
+          <div class="col" style="margin-left:auto;gap:3px;padding-bottom:6px;align-items:flex-end">
+            <div style="font-size:12px;color:rgba(255,255,255,.8)">最低膝角 105°</div>
+            <div style="font-size:12px;color:rgba(255,255,255,.35)">平均 2.1 秒 / 次</div>
+          </div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="micro">评估结论</div>
+        <div class="listrow" style="padding:8px 0"><div class="title">深度</div><div class="right" style="color:var(--warn)">差 5°</div></div>
+        <div class="hair"></div>
+        <div class="listrow" style="padding:8px 0"><div class="title">躯干前倾</div><div class="right" style="color:var(--good)">可接受</div></div>
+        <div class="hair"></div>
+        <div class="listrow" style="padding:8px 0"><div class="title">节奏</div><div class="right" style="color:var(--good)">合理</div></div>
+      </div>
+      <div class="card" style="gap:10px">
+        <div class="micro">怎么改</div>
+        <div style="font-size:13.5px;color:var(--ink2);line-height:1.65">最低点膝角 105°，离目标 100° 差一点。下次刻意再往下坐 5cm，或者在脚后跟垫一片 5kg 杠铃片。</div>
+      </div>
+      <div class="card" style="gap:8px">
+        <div class="micro">说明</div>
+        <div style="font-size:12px;color:var(--ink4);line-height:1.65">只测能算准的三件事：次数、深度、节奏。不做「姿态评分」——那没有共识标准，容易变成伪科学。</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ 底部标签 ============ -->
+  <nav class="tabbar" id="tabbar">
+    <button class="tab on" data-go="today" onclick="go('today')">
+      <svg viewBox="0 0 24 24"><path d="M4 9v6M7 7v10M17 7v10M20 9v6M7 12h10"/></svg>今天</button>
+    <button class="tab" data-go="history" onclick="go('history')">
+      <svg viewBox="0 0 24 24"><path d="M4 7h16M4 12h16M4 17h11"/></svg>记录</button>
+    <button class="tab" data-go="nutrition" onclick="go('nutrition')">
+      <svg viewBox="0 0 24 24"><path d="M6 3v8M6 15v6M12 3v5M12 12v9M18 3v6M18 13v8"/></svg>饮食</button>
+    <button class="tab" data-go="report" onclick="go('report')">
+      <svg viewBox="0 0 24 24"><path d="M5 19v-6M12 19V5M19 19v-9"/></svg>周报</button>
+    <button class="tab" data-go="settings" onclick="go('settings')">
+      <svg viewBox="0 0 24 24"><circle cx="12" cy="8.5" r="3.2"/><path d="M5 19.5c0-3.4 3.1-5.4 7-5.4s7 2 7 5.4"/></svg>我的</button>
+  </nav>
+
+  <div class="toast" id="toast"></div>
+</div>
+
+<div class="meta">
+  <h1>练账 · 交互原型</h1>
+  <p>这是 <b>SwiftUI 界面的可点击复刻</b>，不是编译后的 App 二进制——iOS 应用只能在 macOS 上编译运行。</p>
+  <p>12 个界面，同一套设计令牌（颜色、字号、间距、阴影）与真实演示数据。</p>
+  <p><b>点底部标签</b>切换五个主页面；<br><b>点卡片</b>进入训练中 / 阶段 / 体成分 / 计划包 / 付费墙 / 建档 / 动作评估。</p>
+  <p>左上角 <kbd>2/4</kbd> 环形进度也能点。</p>
+</div>
+
+<script>
+  const screens = [...document.querySelectorAll('.screen')];
+  const tabs = [...document.querySelectorAll('.tab')];
+  const tabbar = document.getElementById('tabbar');
+
+  function go(id){
+    const target = document.getElementById(id);
+    if(!target) return;
+    screens.forEach(s => s.classList.toggle('active', s === target));
+    // 全屏页（训练中 / 阶段 / 体成分…）隐藏底部标签
+    const hide = target.classList.contains('hidetabs');
+    tabbar.style.display = hide ? 'none' : 'flex';
+    // 同步标签高亮
+    const mapped = {today:'today', history:'history', nutrition:'nutrition',
+                    report:'report', settings:'settings'};
+    tabs.forEach(t => t.classList.toggle('on', t.dataset.go === (mapped[id] || '')));
+    target.querySelector('.scroll').scrollTop = 0;
+    location.hash = id;
+  }
+
+  let toastTimer;
+  function toast(text){
+    const el = document.getElementById('toast');
+    el.textContent = text;
+    el.classList.add('on');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => el.classList.remove('on'), 1800);
+  }
+
+  // 支持直接用 #training 之类的地址打开
+  const initial = location.hash.replace('#','') || 'today';
+  go(initial);
+</script>
+</body>
+</html>
