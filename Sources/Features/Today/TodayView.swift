@@ -138,8 +138,6 @@ struct TodayView: View {
                     .font(.system(size: 13.5))
                     .foregroundStyle(Theme.inkSoft)
             }
-                .font(.system(size: 13.5))
-                .foregroundStyle(Theme.inkSoft)
         }
     }
 

@@ -30,6 +30,7 @@ run "框架 import"     "$PYTHON" spec/check_imports.py
 run "符号引用"        "$PYTHON" spec/lint_swift.py
 run "成员访问"        "$PYTHON" spec/lint_members.py
 run "闭包参数"        "$PYTHON" spec/lint_closures.py
+run "修饰符链"        "$PYTHON" spec/lint_modifiers.py
 run "死代码与重复"     "$PYTHON" spec/review_swift.py
 run "中英文案对齐"     "$PYTHON" scripts/extract_strings.py --check
 
