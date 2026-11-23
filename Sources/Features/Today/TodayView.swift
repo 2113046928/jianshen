@@ -18,8 +18,22 @@ struct TodayView: View {
         PlanStore.template(for: profile)
     }
     private var finishedSessions: [TrainingSession] { sessions.filter { $0.isFinished } }
+    /// 今天排到的那一天；nil 表示按星期排时今天休息
+    private var scheduledDay: ProgramDay? {
+        PlanSchedule.day(for: program, finishedSessions: finishedSessions.count)
+    }
+
+    private var isRestDay: Bool {
+        PlanSchedule.usesWeekdays(program) && scheduledDay == nil
+    }
+
     private var nextDay: ProgramDay {
-        WorkoutFactory.nextDay(program: program, finishedSessionCount: finishedSessions.count)
+        scheduledDay ?? ProgramDay(
+            id: "rest",
+            name: "休息日",
+            focus: "今天不安排训练",
+            exerciseIDs: []
+        )
     }
     private var unfinishedSession: TrainingSession? { sessions.first { !$0.isFinished } }
 
@@ -65,7 +79,11 @@ struct TodayView: View {
                 VStack(alignment: .leading, spacing: Theme.gap) {
                     intro
                     weekCard
-                    todayCard
+                    if isRestDay {
+                        restCard
+                    } else {
+                        todayCard
+                    }
                     if let last = finishedSessions.first {
                         lastSessionCard(last)
                     }
@@ -111,7 +129,15 @@ struct TodayView: View {
             Text("\(Fmt.dayFormatter.string(from: .now)) · \(phase.title)")
                 .microLabel()
                 .foregroundColor(Theme.inkFaint)
-            Text("今天练\(nextDay.name)，\(nextDay.exerciseIDs.count) 个动作，约 \(estimatedMinutes) 分钟")
+            if isRestDay {
+                Text("今天休息。按你设定的星期安排，不训练也没关系。")
+                    .font(.system(size: 13.5))
+                    .foregroundStyle(Theme.inkSoft)
+            } else {
+                Text("今天练\(nextDay.name)，\(nextDay.exerciseIDs.count) 个动作，约 \(estimatedMinutes) 分钟")
+                    .font(.system(size: 13.5))
+                    .foregroundStyle(Theme.inkSoft)
+            }
                 .font(.system(size: 13.5))
                 .foregroundStyle(Theme.inkSoft)
         }
@@ -157,6 +183,23 @@ struct TodayView: View {
             WeekStrip(values: dailyVolumes)
         }
         .darkCard()
+    }
+
+    private var restCard: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Text("今天")
+                .microLabel()
+                .foregroundColor(Theme.inkFaint)
+            Text("休息日")
+                .font(.system(size: 34, weight: .bold))
+                .tracking(-1)
+                .foregroundStyle(Theme.ink)
+            Text("按你设定的星期安排，今天不训练。散步、拉伸都行；想改安排可以去「我的 → 训练计划」。")
+                .font(.system(size: 13))
+                .foregroundStyle(Theme.inkSoft)
+                .fixedSize(horizontal: false, vertical: true)
+        }
+        .card()
     }
 
     private var remainingText: String {

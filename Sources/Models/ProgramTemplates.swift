@@ -5,6 +5,8 @@ struct ProgramDay: Identifiable, Codable, Equatable {
     var name: String
     var focus: String
     var exerciseIDs: [String]
+    /// 固定星期几：1 = 周日 … 7 = 周六（与 Calendar.weekday 一致）。nil 表示按完成次数轮转。
+    var weekday: Int? = nil
 }
 
 struct ProgramTemplate: Identifiable, Codable, Equatable {

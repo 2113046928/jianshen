@@ -85,3 +85,35 @@ enum PlanStore {
         )
     }
 }
+
+/// 排课规则：只要有一天设了星期，就按星期排；否则沿用「按完成次数轮转」。
+enum PlanSchedule {
+
+    /// 与 Calendar.weekday 对齐：1 = 周日 … 7 = 周六
+    private static let names = ["日", "一", "二", "三", "四", "五", "六"]
+
+    static func name(for weekday: Int) -> String {
+        let index = min(max(weekday - 1, 0), names.count - 1)
+        return "周" + names[index]
+    }
+
+    static func usesWeekdays(_ program: ProgramTemplate) -> Bool {
+        program.days.contains { $0.weekday != nil }
+    }
+
+    /// 今天该练哪一天。返回 nil = 今天休息。
+    static func day(
+        for program: ProgramTemplate,
+        finishedSessions: Int,
+        on date: Date = .now,
+        calendar: Calendar = .current
+    ) -> ProgramDay? {
+        if usesWeekdays(program) {
+            let weekday = calendar.component(.weekday, from: date)
+            return program.days.first { $0.weekday == weekday }
+        }
+        guard !program.days.isEmpty else { return nil }
+        let index = max(0, finishedSessions) % program.days.count
+        return program.days[index]
+    }
+}

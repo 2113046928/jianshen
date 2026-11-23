@@ -80,3 +80,87 @@ final class PlanStoreTests: XCTestCase {
         XCTAssertTrue(day.exerciseIDs.isEmpty)
     }
 }
+
+// MARK: - 按星期排课
+
+final class PlanScheduleTests: XCTestCase {
+
+    private var calendar: Calendar {
+        var value = Calendar(identifier: .gregorian)
+        value.timeZone = TimeZone(secondsFromGMT: 0)!
+        return value
+    }
+
+    /// 2026-11-23 12:00 UTC，星期几由日历自己算，避免写死
+    private var sampleDate: Date {
+        calendar.date(from: DateComponents(year: 2026, month: 11, day: 23, hour: 12))!
+    }
+
+    private var sampleWeekday: Int {
+        calendar.component(.weekday, from: sampleDate)
+    }
+
+    private func plan(weekdays: [Int?]) -> ProgramTemplate {
+        ProgramTemplate(
+            id: PlanStore.customID,
+            name: "测试计划",
+            subtitle: "",
+            days: weekdays.enumerated().map { index, weekday in
+                ProgramDay(
+                    id: "d\(index)",
+                    name: "第 \(index + 1) 天",
+                    focus: "",
+                    exerciseIDs: ["barbell-bench-press"],
+                    weekday: weekday
+                )
+            }
+        )
+    }
+
+    func testMatchesConfiguredWeekday() {
+        let template = plan(weekdays: [sampleWeekday, nil])
+        let day = PlanSchedule.day(
+            for: template,
+            finishedSessions: 0,
+            on: sampleDate,
+            calendar: calendar
+        )
+        XCTAssertEqual(day?.id, "d0")
+    }
+
+    func testReturnsNilOnRestDay() {
+        let other = sampleWeekday == 1 ? 2 : 1
+        let template = plan(weekdays: [other])
+        XCTAssertTrue(PlanSchedule.usesWeekdays(template))
+        XCTAssertNil(
+            PlanSchedule.day(for: template, finishedSessions: 0, on: sampleDate, calendar: calendar)
+        )
+    }
+
+    func testFallsBackToRotationWhenNoWeekdays() {
+        let template = plan(weekdays: [nil, nil])
+        XCTAssertFalse(PlanSchedule.usesWeekdays(template))
+
+        let first = PlanSchedule.day(for: template, finishedSessions: 0, on: sampleDate, calendar: calendar)
+        let second = PlanSchedule.day(for: template, finishedSessions: 1, on: sampleDate, calendar: calendar)
+        let third = PlanSchedule.day(for: template, finishedSessions: 2, on: sampleDate, calendar: calendar)
+
+        XCTAssertEqual(first?.id, "d0")
+        XCTAssertEqual(second?.id, "d1")
+        XCTAssertEqual(third?.id, "d0")
+    }
+
+    func testEmptyPlanReturnsNil() {
+        let empty = ProgramTemplate(id: PlanStore.customID, name: "空", subtitle: "", days: [])
+        XCTAssertNil(PlanSchedule.day(for: empty, finishedSessions: 0, on: sampleDate, calendar: calendar))
+    }
+
+    func testWeekdayNameMapping() {
+        XCTAssertEqual(PlanSchedule.name(for: 1), "周日")
+        XCTAssertEqual(PlanSchedule.name(for: 2), "周一")
+        XCTAssertEqual(PlanSchedule.name(for: 7), "周六")
+        // 越界也不崩
+        XCTAssertEqual(PlanSchedule.name(for: 0), "周日")
+        XCTAssertEqual(PlanSchedule.name(for: 99), "周六")
+    }
+}

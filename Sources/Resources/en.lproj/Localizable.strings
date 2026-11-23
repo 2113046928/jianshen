@@ -213,7 +213,6 @@
 "添加动作" = "Add exercise";
 "添加训练日" = "Add training day";
 "点「编辑」可以把任意模板改成自己的：增删动作、调整顺序。改完会存为「自定义」，随时能切回模板。" = "Tap Edit to turn any template into your own: add, remove and reorder exercises. It's saved as Custom, and you can switch back any time.";
-"点某一天可以增删动作、调整顺序。左右滑动删除训练日。" = "Tap a day to add, remove or reorder its exercises. Swipe left to delete a day.";
 "用当前预设重新开始" = "Restart from current template";
 "编辑动作与训练日" = "Edit exercises and days";
 "编辑训练计划" = "Edit training plan";
@@ -223,3 +222,16 @@
 "这一天的动作是空的。去「我的 → 训练计划」加几个动作，或者换一天。" = "This day has no exercises. Add some in Settings → Training plan, or pick another day.";
 "这一天还没有动作，练不了。至少要加一个。" = "This day has no exercises yet — add at least one.";
 "重点（例如：胸 · 肩 · 三头）" = "Focus (e.g. chest · shoulders · triceps)";
+
+"不指定（按完成次数轮转）" = "Not scheduled (rotate by session count)";
+"今天休息。按你设定的星期安排，不训练也没关系。" = "Rest day. Your weekday schedule has no session today — that's fine.";
+"休息日" = "Rest day";
+"动作库里没有合适的同类动作。" = "No suitable alternative in the exercise library.";
+"固定星期" = "Fixed weekday";
+"已按星期排课：今天没有对应训练日就自动显示休息日。" = "Scheduled by weekday: days without a session show as a rest day.";
+"按你设定的星期安排，今天不训练。散步、拉伸都行；想改安排可以去「我的 → 训练计划」。" = "Your weekday schedule has no session today. Walk or stretch if you like; to change it, go to Settings → Training plan.";
+"换成" = "Replace with";
+"换成同类动作" = "Replace exercise";
+"点右边的循环图标可以换成同动作模式的替代动作。" = "Tap the loop icon to swap in an exercise with the same movement pattern.";
+"点某一天可以增删动作、指定星期。左右滑动删除训练日。" = "Tap a day to add, remove or reorder its exercises and set a weekday. Swipe left to delete a day.";
+"给任意一天设了星期，整个计划就改为「按星期」；没设星期的日子就是休息日。" = "Give any day a weekday and the whole plan switches to weekday scheduling; days without one become rest days.";
