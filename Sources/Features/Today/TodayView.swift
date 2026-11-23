@@ -15,10 +15,7 @@ struct TodayView: View {
     private var phase: Phase { profile?.phase ?? .bulk }
     private var weeklyGoal: Int { max(profile?.weeklyGoal ?? 3, 1) }
     private var program: ProgramTemplate {
-        ProgramCatalog.template(
-            id: profile?.activeProgramID ?? "ppl",
-            unlocked: profile?.unlockedProgramIDs ?? []
-        )
+        PlanStore.template(for: profile)
     }
     private var finishedSessions: [TrainingSession] { sessions.filter { $0.isFinished } }
     private var nextDay: ProgramDay {
@@ -199,9 +196,17 @@ struct TodayView: View {
                 }
             }
 
+            if nextDay.exerciseIDs.isEmpty {
+                Text("这一天的动作是空的。去「我的 → 训练计划」加几个动作，或者换一天。")
+                    .font(.system(size: 12))
+                    .foregroundStyle(Theme.warn)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+
             PrimaryButton(
                 title: unfinishedSession == nil ? "开始训练" : "继续上次训练",
-                systemImage: "play.fill"
+                systemImage: "play.fill",
+                enabled: unfinishedSession != nil || !nextDay.exerciseIDs.isEmpty
             ) {
                 startWorkout()
             }

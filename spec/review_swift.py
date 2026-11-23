@@ -63,13 +63,36 @@ for path in files():
                 if not re.search(rf"(private )?(var|let|func) {name}\b", text):
                     problems.append(f"{rel}: body 引用了 {name}，但文件中没有声明")
 
-    # 4. 同一文件里重复的 private var
-    declared = defaultdict(int)
+    # 4. 同一**类型作用域**内重复的 private var
+    #    （不同 struct 各有 exercises 是正常的，只有同一类型里重复才算问题）
+    scopes = []
+    for match in re.finditer(r"(?:^|\n)\s*(?:private\s+)?(?:struct|final class|class|enum)\s+(\w+)[^{]*\{", text):
+        name = match.group(1)
+        depth, i, end = 0, match.end() - 1, len(text)
+        while i < len(text):
+            if text[i] == "{":
+                depth += 1
+            elif text[i] == "}":
+                depth -= 1
+                if depth == 0:
+                    end = i
+                    break
+            i += 1
+        scopes.append((name, match.end(), end))
+
+    declared = defaultdict(list)
     for match in re.finditer(r"private var (\w+):", text):
-        declared[match.group(1)] += 1
-    for name, count in declared.items():
-        if count > 1:
-            problems.append(f"{rel}: private var {name} 重复声明 {count} 次")
+        position = match.start()
+        owner = "file"
+        for type_name, start, end in scopes:
+            if start <= position <= end:
+                owner = type_name
+                break
+        declared[(owner, match.group(1))].append(position)
+
+    for (owner, name), positions in declared.items():
+        if len(positions) > 1:
+            problems.append(f"{rel}: {owner} 里 private var {name} 重复声明 {len(positions)} 次")
 
 if problems:
     print("审查发现：")

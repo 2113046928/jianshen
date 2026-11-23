@@ -89,15 +89,31 @@ struct SettingsView: View {
     // MARK: - 计划
 
     private var programSection: some View {
-        Section("训练计划") {
+        Section {
             Picker("模板", selection: programBinding) {
+                if PlanStore.customTemplate(for: profile) != nil {
+                    Text("自定义").tag(PlanStore.customID)
+                }
                 ForEach(ProgramCatalog.all(unlocked: profile?.unlockedProgramIDs ?? [])) { template in
                     Text(L10n.templateOption(name: template.name, days: template.days.count)).tag(template.id)
                 }
             }
-            Text(ProgramCatalog.template(id: profile?.activeProgramID ?? "ppl", unlocked: profile?.unlockedProgramIDs ?? []).subtitle)
+
+            if let profile {
+                NavigationLink {
+                    PlanEditorView(profile: profile)
+                } label: {
+                    Label("编辑动作与训练日", systemImage: "slider.horizontal.3")
+                }
+            }
+
+            Text(PlanStore.template(for: profile).subtitle)
                 .font(.caption)
                 .foregroundStyle(.secondary)
+        } header: {
+            Text("训练计划")
+        } footer: {
+            Text("点「编辑」可以把任意模板改成自己的：增删动作、调整顺序。改完会存为「自定义」，随时能切回模板。")
         }
     }
 

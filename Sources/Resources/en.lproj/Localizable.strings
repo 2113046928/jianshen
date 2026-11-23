@@ -19,7 +19,6 @@
 "加一组" = "Add set";
 "动作评估" = "Form check";
 "动作评估（深蹲）" = "Form check (squat)";
-"升级" = "Upgrade";
 "去「今天」开始第一次训练" = "Start your first workout in Today";
 "取消" = "Cancel";
 "只评估膝角（深度）、躯干前倾和节奏三件事。它不判断动作对错，也不替代教练或医生——落地姿势、足弓、骨盆位置都超出这台手机能看准的范围。" = "It measures three things only: knee angle (depth), torso lean and tempo. It does not judge whether a rep was correct, and it is no substitute for a coach or a doctor — foot placement, arch and pelvic position are beyond what this phone can see.";
@@ -199,10 +198,6 @@
 "%" = "%";
 "FFMI" = "FFMI";
 
-"Pro" = "Pro";
-"了解 Pro" = "See Pro";
-"用阶段开始前后的最佳 1RM 做对比，卧推、深蹲、硬拉、推举分项显示。这是 Pro 的一部分。" = "Compares your best 1RM before and during the phase, broken down by bench, squat, deadlift and press. Part of Pro.";
-"看减脂期掉的是脂肪还是肌肉" = "See whether cutting cost you fat or muscle";
 
 "千卡" = "kcal";
 "本周" = "This week";
@@ -210,3 +205,21 @@
 "每日目标" = "Daily target";
 
 "时长" = "Duration";
+
+"丢弃修改并重置" = "Discard and reset";
+"会丢弃你在这份自定义计划里做过的修改。" = "This discards the edits you made to this custom plan.";
+"保存" = "Save";
+"动作" = "Exercises";
+"添加动作" = "Add exercise";
+"添加训练日" = "Add training day";
+"点「编辑」可以把任意模板改成自己的：增删动作、调整顺序。改完会存为「自定义」，随时能切回模板。" = "Tap Edit to turn any template into your own: add, remove and reorder exercises. It's saved as Custom, and you can switch back any time.";
+"点某一天可以增删动作、调整顺序。左右滑动删除训练日。" = "Tap a day to add, remove or reorder its exercises. Swipe left to delete a day.";
+"用当前预设重新开始" = "Restart from current template";
+"编辑动作与训练日" = "Edit exercises and days";
+"编辑训练计划" = "Edit training plan";
+"自定义" = "Custom";
+"训练日" = "Training days";
+"训练日名称" = "Day name";
+"这一天的动作是空的。去「我的 → 训练计划」加几个动作，或者换一天。" = "This day has no exercises. Add some in Settings → Training plan, or pick another day.";
+"这一天还没有动作，练不了。至少要加一个。" = "This day has no exercises yet — add at least one.";
+"重点（例如：胸 · 肩 · 三头）" = "Focus (e.g. chest · shoulders · triceps)";

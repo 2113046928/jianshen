@@ -1,17 +1,17 @@
 import Foundation
 
-struct ProgramDay: Identifiable {
-    let id: String
-    let name: String
-    let focus: String
-    let exerciseIDs: [String]
+struct ProgramDay: Identifiable, Codable, Equatable {
+    var id: String
+    var name: String
+    var focus: String
+    var exerciseIDs: [String]
 }
 
-struct ProgramTemplate: Identifiable {
-    let id: String
-    let name: String
-    let subtitle: String
-    let days: [ProgramDay]
+struct ProgramTemplate: Identifiable, Codable, Equatable {
+    var id: String
+    var name: String
+    var subtitle: String
+    var days: [ProgramDay]
 }
 
 enum ProgramTemplates {
