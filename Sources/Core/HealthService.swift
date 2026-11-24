@@ -12,7 +12,9 @@ final class HealthService: ObservableObject {
     @Published var lastError: String?
     @Published var isWorking = false
 
-    private let store = HKHealthStore()
+    /// 延迟创建：没有 HealthKit 权限的安装包里 `HKHealthStore()` 会直接抛异常，
+    /// 提前创建会让 App 一启动就崩。改成真正用到时才建。
+    private lazy var store = HKHealthStore()
 
     var isAvailable: Bool { HKHealthStore.isHealthDataAvailable() }
 

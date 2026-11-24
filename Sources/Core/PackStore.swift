@@ -19,7 +19,7 @@ final class PackStore: ObservableObject {
         guard !ids.isEmpty else { return }
         do {
             let result = try await Product.products(for: ids)
-            products = Dictionary(uniqueKeysWithValues: result.map { ($0.id, $0) })
+            products = result.reduce(into: [String: Product]()) { $0[$1.id] = $1 }
         } catch {
             message = "商品加载失败：\(error.localizedDescription)"
         }

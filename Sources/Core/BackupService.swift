@@ -191,7 +191,7 @@ enum BackupService {
         into context: ModelContext,
         exercises: [Exercise]
     ) throws -> RestoreSummary {
-        let lookup = Dictionary(uniqueKeysWithValues: exercises.map { ($0.id, $0) })
+        let lookup = exercises.reduce(into: [String: Exercise]()) { $0[$1.id] = $1 }
 
         for session in try context.fetch(FetchDescriptor<TrainingSession>()) {
             context.delete(session)

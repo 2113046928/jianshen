@@ -124,7 +124,7 @@ private struct DayEditorView: View {
     @State private var showSwap = false
 
     private var nameByID: [String: String] {
-        Dictionary(uniqueKeysWithValues: exercises.map { ($0.id, $0.name) })
+        exercises.reduce(into: [String: String]()) { $0[$1.id] = $1.name }
     }
 
     private var weekdayBinding: Binding<Int> {

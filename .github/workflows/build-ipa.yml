@@ -44,7 +44,7 @@ jobs:
           # - watch 会被 -sdk iphoneos 强行用 iOS SDK 编译，一致性报错，且产物不可用；
           # - entitlements 未签名时不生效，还会干扰打包，由侧载工具重签时补上。
           # widget 保留：这样你重签后小组件能出现。
-          WITH_WATCH=0 WITH_ENTITLEMENTS=0 python3 scripts/gen_project.py 2>&1 | tee gen.log
+          WITH_WATCH=0 WITH_WIDGET=0 WITH_ENTITLEMENTS=0 python3 scripts/gen_project.py 2>&1 | tee gen.log
 
       - name: 环境信息
         continue-on-error: true

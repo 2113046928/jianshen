@@ -28,7 +28,7 @@ enum DemoSeed {
         SeedLoader.seedIfNeeded(context: context)
 
         let exercises = (try? context.fetch(FetchDescriptor<Exercise>())) ?? []
-        let lookup = Dictionary(uniqueKeysWithValues: exercises.map { ($0.id, $0) })
+        let lookup = exercises.reduce(into: [String: Exercise]()) { $0[$1.id] = $1 }
         guard !lookup.isEmpty else { return }
 
         let profile = SeedLoader.ensureProfile(context: context)
