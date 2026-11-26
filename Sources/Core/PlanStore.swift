@@ -3,12 +3,15 @@ import SwiftData
 
 /// 自定义训练计划的读写。
 ///
-/// 计划本身是值类型（`ProgramTemplate`），序列化后存在 `UserProfile.customPlanJSON`，
-/// 不新增实体，避免 SwiftData 迁移风险。
+/// 计划是值类型（`ProgramTemplate`），序列化成 JSON 存在 UserDefaults。
+/// 刻意**不**放进 SwiftData 模型：那样每次加字段都要迁移，一旦迁移失败，
+/// 整个库打不开、数据全掉——代价远大于收益。
 enum PlanStore {
 
     /// 自定义计划的固定 id
     static let customID = "custom"
+
+    private static let storageKey = "trainledger.customPlan.v1"
 
     // MARK: - 编解码
 
@@ -26,9 +29,8 @@ enum PlanStore {
 
     /// 当前生效的计划：自定义优先，其次解锁的预设，最后回落到推拉腿
     static func template(for profile: UserProfile?) -> ProgramTemplate {
-        if let profile,
-           profile.activeProgramID == customID,
-           let custom = decode(profile.customPlanJSON) {
+        if profile?.activeProgramID == customID,
+           let custom = decode(rawJSON) {
             return custom
         }
         return ProgramCatalog.template(
@@ -38,15 +40,19 @@ enum PlanStore {
     }
 
     static func customTemplate(for profile: UserProfile?) -> ProgramTemplate? {
-        decode(profile?.customPlanJSON)
+        decode(rawJSON)
+    }
+
+    static var rawJSON: String? {
+        UserDefaults.standard.string(forKey: storageKey)
     }
 
     // MARK: - 写入
 
     /// 保存自定义计划并立刻切过去
     static func save(_ template: ProgramTemplate, profile: UserProfile?, context: ModelContext) {
+        UserDefaults.standard.set(encode(template), forKey: storageKey)
         guard let profile else { return }
-        profile.customPlanJSON = encode(template)
         profile.activeProgramID = customID
         try? context.save()
     }

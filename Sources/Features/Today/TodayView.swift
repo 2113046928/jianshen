@@ -77,6 +77,9 @@ struct TodayView: View {
         NavigationStack {
             ScrollView {
                 VStack(alignment: .leading, spacing: Theme.gap) {
+                    if StorageHealth.isEphemeral {
+                        storageWarningCard
+                    }
                     intro
                     weekCard
                     if isRestDay {
@@ -181,6 +184,30 @@ struct TodayView: View {
             WeekStrip(values: dailyVolumes)
         }
         .darkCard()
+    }
+
+    /// 数据库没打开时直接告诉用户，避免「数据莫名消失」
+    private var storageWarningCard: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text("数据没有保存")
+                .font(.system(size: 15, weight: .bold))
+                .foregroundStyle(Theme.danger)
+            Text("本地数据库打不开，这次运行在内存模式：退出后所有记录都会丢。")
+                .font(.system(size: 12))
+                .foregroundStyle(Theme.inkSoft)
+                .fixedSize(horizontal: false, vertical: true)
+            if let error = StorageHealth.errorText {
+                Text(error)
+                    .font(.system(size: 10.5))
+                    .foregroundStyle(Theme.inkFaint)
+                    .lineLimit(8)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+            Text("把这张卡片截图发给开发者就能定位。")
+                .font(.system(size: 11))
+                .foregroundStyle(Theme.inkFaint)
+        }
+        .card()
     }
 
     private var restCard: some View {

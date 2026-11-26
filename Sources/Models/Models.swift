@@ -198,8 +198,6 @@ final class UserProfile {
     var didOnboard: Bool?
     /// 已解锁的计划包 ID
     var unlockedProgramIDs: [String] = []
-    /// 自定义训练计划（JSON），nil 表示还在用预设
-    var customPlanJSON: String?
     /// 营养计算需要的字段（nil 表示还没填，界面用默认值兜底）
     var sexRaw: String?
     var age: Int?
@@ -227,7 +225,6 @@ final class UserProfile {
         self.phaseStartedAt = nil
         self.didOnboard = nil
         self.unlockedProgramIDs = []
-        self.customPlanJSON = nil
         self.sexRaw = nil
         self.age = nil
         self.heightCM = nil

@@ -235,3 +235,7 @@
 "点右边的循环图标可以换成同动作模式的替代动作。" = "Tap the loop icon to swap in an exercise with the same movement pattern.";
 "点某一天可以增删动作、指定星期。左右滑动删除训练日。" = "Tap a day to add, remove or reorder its exercises and set a weekday. Swipe left to delete a day.";
 "给任意一天设了星期，整个计划就改为「按星期」；没设星期的日子就是休息日。" = "Give any day a weekday and the whole plan switches to weekday scheduling; days without one become rest days.";
+
+"把这张卡片截图发给开发者就能定位。" = "Screenshot this card and send it to the developer to diagnose it.";
+"数据没有保存" = "Data isn't being saved";
+"本地数据库打不开，这次运行在内存模式：退出后所有记录都会丢。" = "The local database can't be opened, so this session runs in memory: everything is lost when you quit.";
