@@ -6,6 +6,12 @@ struct TrainLedgerApp: App {
     private let container: ModelContainer
 
     init() {
+        // 启动次数：如果每次打开都显示 1，说明 App 数据被安装方式清掉了（例如每次都重装）
+        let defaults = UserDefaults.standard
+        let count = defaults.integer(forKey: "trainledger.launchCount") + 1
+        defaults.set(count, forKey: "trainledger.launchCount")
+        StorageHealth.launchCount = count
+
         container = Self.makeContainer()
     }
 
@@ -29,50 +35,53 @@ struct TrainLedgerApp: App {
         ])
     }
 
-    /// 启动时优先用旧库；打不开也不许崩，但要**如实记录原因**，
-    /// 供界面展示（否则用户只能看到「数据没保存」，无法排查）。
+    /// 只用**磁盘上的文件库**，绝不退到内存。
+    ///
+    /// 顺序：默认库 → 挪走坏库后重试 → 换一个本地库文件（recovery.store）。
+    /// 三档全部落在 Application Support，任何一档成功，数据都会持久保存在手机上。
     private static func makeContainer() -> ModelContainer {
-        let configuration = ModelConfiguration()
-
-        do {
-            return try ModelContainer(for: schema, configurations: [configuration])
-        } catch {
-            StorageHealth.record(error: error)
-            quarantineStoreFiles()
+        if let container = open(ModelConfiguration()) {
+            return container
         }
 
-        if let retry = try? ModelContainer(for: schema, configurations: [configuration]) {
-            return retry
+        StorageHealth.record(errorText: "默认数据库打不开，已备份并重建")
+        quarantineStoreFiles()
+
+        if let container = open(ModelConfiguration()) {
+            return container
         }
 
-        let memory = ModelConfiguration(isStoredInMemoryOnly: true)
-        if let fallback = try? ModelContainer(for: schema, configurations: [memory]) {
-            StorageHealth.markEphemeral()
-            return fallback
+        // 还是不行：换一个本地库文件，数据依然保存在手机上
+        StorageHealth.markRecovery()
+        if let container = open(ModelConfiguration("recovery")) {
+            return container
         }
 
-        // 连内存库都建不出来属于系统级异常，只能停在这里并保留错误信息
-        StorageHealth.markEphemeral()
-        fatalError("本地数据库无法初始化：\(StorageHealth.errorText ?? "未知原因")")
+        quarantineStoreFiles()
+        if let container = open(ModelConfiguration("recovery")) {
+            return container
+        }
+
+        fatalError("本地数据库无法创建：\(StorageHealth.errorText ?? "未知原因")")
     }
 
-    /// 把打不开的库文件挪走。
-    /// 之前只处理了 `default.store`，实际 SwiftData 旁边还有 `-shm` / `-wal`；
-    /// 而且真实文件名可能不同，所以这里按前缀整体扫描。
+    private static func open(_ configuration: ModelConfiguration) -> ModelContainer? {
+        try? ModelContainer(for: schema, configurations: [configuration])
+    }
+
+    /// 把打不开的库文件挪到旁边（含 -shm / -wal 与 recovery 系列），保留现场
     private static func quarantineStoreFiles() {
         let manager = FileManager.default
         guard let base = manager.urls(for: .applicationSupportDirectory, in: .userDomainMask).first else {
             return
         }
         let stamp = Int(Date().timeIntervalSince1970)
+        let contents = (try? manager.contentsOfDirectory(at: base, includingPropertiesForKeys: nil)) ?? []
 
-        let contents = (try? manager.contentsOfDirectory(
-            at: base,
-            includingPropertiesForKeys: nil
-        )) ?? []
-
-        for url in contents where url.lastPathComponent.hasPrefix("default.store") {
-            let target = base.appendingPathComponent("broken-\(stamp)-\(url.lastPathComponent)")
+        for url in contents {
+            let name = url.lastPathComponent
+            guard name.hasPrefix("default.store") || name.hasPrefix("recovery.store") else { continue }
+            let target = base.appendingPathComponent("broken-\(stamp)-\(name)")
             try? manager.moveItem(at: url, to: target)
         }
     }
@@ -80,20 +89,22 @@ struct TrainLedgerApp: App {
 
 // MARK: - 存储健康状态
 
-/// 数据库打不开时记录下来，界面上直接显示，省得用户去导日志。
+/// 数据库异常时记录原因，界面上直接显示，省得用户去导日志。
 enum StorageHealth {
-    /// 是否退回了「内存模式」——此时任何数据都不会保存
-    static var isEphemeral = false
-    /// 第一次打开失败的真实错误
+    /// 默认库打不开、改用 recovery 库（数据仍会保存在手机上，只是换了文件）
+    static var usedRecoveryStore = false
+    /// 最近一次异常的描述
     static var errorText: String?
+    /// 本机累计启动次数
+    static var launchCount = 0
 
-    static func record(error: Error) {
-        if errorText == nil {
-            errorText = String(describing: error)
+    static func record(errorText: String) {
+        if self.errorText == nil {
+            self.errorText = errorText
         }
     }
 
-    static func markEphemeral() {
-        isEphemeral = true
+    static func markRecovery() {
+        usedRecoveryStore = true
     }
 }

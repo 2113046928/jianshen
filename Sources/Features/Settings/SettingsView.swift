@@ -161,6 +161,17 @@ struct SettingsView: View {
                 Text(version)
                     .foregroundStyle(.secondary)
             }
+            HStack {
+                Text("本机启动次数")
+                Spacer()
+                Text("\(StorageHealth.launchCount)")
+                    .foregroundStyle(.secondary)
+            }
+            if StorageHealth.launchCount <= 1 {
+                Text("如果每次打开这里都是 1，说明 App 数据被安装方式清掉了，不是程序没保存。")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
             NavigationLink("隐私说明") {
                 PrivacyView()
             }

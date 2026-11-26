@@ -77,7 +77,7 @@ struct TodayView: View {
         NavigationStack {
             ScrollView {
                 VStack(alignment: .leading, spacing: Theme.gap) {
-                    if StorageHealth.isEphemeral {
+                    if StorageHealth.usedRecoveryStore {
                         storageWarningCard
                     }
                     intro
@@ -189,10 +189,10 @@ struct TodayView: View {
     /// 数据库没打开时直接告诉用户，避免「数据莫名消失」
     private var storageWarningCard: some View {
         VStack(alignment: .leading, spacing: 8) {
-            Text("数据没有保存")
+            Text("已改用新的本地数据库")
                 .font(.system(size: 15, weight: .bold))
-                .foregroundStyle(Theme.danger)
-            Text("本地数据库打不开，这次运行在内存模式：退出后所有记录都会丢。")
+                .foregroundStyle(Theme.warn)
+            Text("旧数据库读不出来，已保留备份并新建了一个。新记录会正常保存在手机上，但旧记录无法恢复。")
                 .font(.system(size: 12))
                 .foregroundStyle(Theme.inkSoft)
                 .fixedSize(horizontal: false, vertical: true)
