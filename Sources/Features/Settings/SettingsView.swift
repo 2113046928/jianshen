@@ -132,6 +132,11 @@ struct SettingsView: View {
             } label: {
                 Label("动作评估（深蹲）", systemImage: "figure.gymnastics")
             }
+            NavigationLink {
+                ExerciseLibraryView()
+            } label: {
+                Label("动作库", systemImage: "books.vertical")
+            }
         }
     }
 

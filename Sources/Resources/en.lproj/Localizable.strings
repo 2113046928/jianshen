@@ -242,3 +242,9 @@
 "已改用新的本地数据库" = "Switched to a new local database";
 "旧数据库读不出来，已保留备份并新建了一个。新记录会正常保存在手机上，但旧记录无法恢复。" = "The old database couldn't be read, so it was backed up and a new one created. New records are saved on this phone; old records can't be recovered.";
 "本机启动次数" = "Launches on this phone";
+
+"你的记录" = "Your record";
+"动作库" = "Exercise library";
+"动作要领" = "How to do it";
+"复合" = "Compound";
+"示意图为动作模式的简化示意，用于理解发力方向，不代替专业指导。" = "Diagrams are simplified schematics of each movement pattern showing the direction of force — not a substitute for professional coaching.";
