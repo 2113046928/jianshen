@@ -48,7 +48,7 @@ struct ExerciseLibraryView: View {
 
     private func row(_ exercise: Exercise) -> some View {
         HStack(spacing: 12) {
-            thumbnail(exercise.pattern, size: CGSize(width: 72, height: 45))
+            thumbnail(for: exercise, size: CGSize(width: 72, height: 45))
             VStack(alignment: .leading, spacing: 3) {
                 Text(exercise.name)
                 Text("\(exercise.equipment.title) · \(exercise.targetReps.lowerBound)–\(exercise.targetReps.upperBound) 次")
@@ -65,6 +65,10 @@ struct ExerciseDetailView: View {
     let exercise: Exercise
 
     @Query(sort: \TrainingSession.startedAt, order: .reverse) private var sessions: [TrainingSession]
+
+    private var photos: [UIImage] {
+        ExercisePhotoStore.photos(for: exercise.id)
+    }
 
     private var guide: ExerciseGuide? {
         ExerciseGuideStore.guide(for: exercise.pattern)
@@ -84,12 +88,34 @@ struct ExerciseDetailView: View {
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 18) {
-                Image(ExerciseGuideStore.imageName(for: exercise.pattern))
-                    .resizable()
-                    .scaledToFit()
-                    .frame(maxWidth: .infinity)
-                    .background(Theme.bg)
-                    .clipShape(RoundedRectangle(cornerRadius: Theme.radius, style: .continuous))
+                if photos.isEmpty {
+                    Image(ExerciseGuideStore.imageName(for: exercise.pattern))
+                        .resizable()
+                        .scaledToFit()
+                        .frame(maxWidth: .infinity)
+                        .background(Theme.bg)
+                        .clipShape(RoundedRectangle(cornerRadius: Theme.radius, style: .continuous))
+                } else {
+                    VStack(spacing: 10) {
+                        ForEach(Array(photos.enumerated()), id: \.offset) { pair in
+                            Image(uiImage: pair.element)
+                                .resizable()
+                                .scaledToFit()
+                                .frame(maxWidth: .infinity)
+                                .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
+                                .overlay(alignment: .topLeading) {
+                                    Text(pair.offset == 0 ? "起始" : "结束")
+                                        .font(.system(size: 11, weight: .bold))
+                                        .foregroundStyle(.white)
+                                        .padding(.horizontal, 8)
+                                        .padding(.vertical, 3)
+                                        .background(.black.opacity(0.45))
+                                        .clipShape(RoundedRectangle(cornerRadius: 7, style: .continuous))
+                                        .padding(8)
+                                }
+                        }
+                    }
+                }
 
                 VStack(alignment: .leading, spacing: 6) {
                     Text(exercise.name)
@@ -147,7 +173,7 @@ struct ExerciseDetailView: View {
                     .card()
                 }
 
-                Text("示意图为动作模式的简化示意，用于理解发力方向，不代替专业指导。")
+                Text("实拍图来自 free-exercise-db（公有领域）；未收录的动作显示简化示意图。图片不代替专业指导。")
                     .font(.caption2)
                     .foregroundStyle(Theme.inkFaint)
             }
@@ -193,14 +219,18 @@ struct ExerciseDetailView: View {
 
 // MARK: - 共用缩略图
 
-func thumbnail(_ pattern: MovementPattern, size: CGSize) -> some View {
-    Image(ExerciseGuideStore.imageName(for: pattern))
-        .resizable()
-        .scaledToFill()
-        .frame(width: size.width, height: size.height)
-        .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
-        .overlay(
-            RoundedRectangle(cornerRadius: 8, style: .continuous)
-                .stroke(Color.black.opacity(0.06), lineWidth: 1)
-        )
+func thumbnail(for exercise: Exercise, size: CGSize) -> some View {
+    Group {
+        if let image = ExercisePhotoStore.cover(for: exercise.id) {
+            Image(uiImage: image).resizable().scaledToFill()
+        } else {
+            Image(ExerciseGuideStore.imageName(for: exercise.pattern)).resizable().scaledToFill()
+        }
+    }
+    .frame(width: size.width, height: size.height)
+    .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
+    .overlay(
+        RoundedRectangle(cornerRadius: 8, style: .continuous)
+            .stroke(Color.black.opacity(0.06), lineWidth: 1)
+    )
 }
